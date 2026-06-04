@@ -30,6 +30,7 @@ type ChecklistHeader = {
   porcentaje_completado: number
   items_obligatorios: number
   items_obligatorios_ok: number
+  tipo_trabajo?: string
 }
 
 export default function ChecklistPage() {
@@ -56,6 +57,7 @@ export default function ChecklistPage() {
         const { error: rpcErr } = await (supabase as any).rpc('crear_checklist_desde_template', { p_id_obra: idObra })
         if (rpcErr) { setError('No se pudo crear el checklist: ' + rpcErr.message); setLoading(false); return }
         const { data: ch2 } = await supabase.from('checklists').select('*').eq('id_obra', idObra).single()
+        if (!ch2) { setError('No se pudo obtener el checklist creado'); setLoading(false); return }
         setChecklist(ch2)
         const { data: its } = await supabase.from('items_checklist').select('*').eq('checklist_id', ch2.id).order('orden')
         setItems(its ?? [])

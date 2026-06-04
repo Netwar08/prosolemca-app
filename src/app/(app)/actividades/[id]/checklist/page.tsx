@@ -75,7 +75,7 @@ export default function ChecklistPage() {
     const update: any = { respondido: true, respondido_at: new Date().toISOString() }
     update[campo] = valor
 
-    await (supabase.from('items_checklist').update(update).eq('id', item.id) as any)
+    await (supabase.from('items_checklist') as any).update(update).eq('id', item.id)
 
     // Actualizar estado local
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, [campo]: valor, respondido: true } : i))
@@ -87,11 +87,11 @@ export default function ChecklistPage() {
     const pct = Math.round(respondidos.length / todosItems.length * 100)
 
     if (checklist) {
-      await (supabase.from('checklists').update({
+      await (supabase.from('checklists') as any).update({
         items_completados: respondidos.length,
         items_obligatorios_ok: obligOk,
         porcentaje_completado: pct,
-      }).eq('id', checklist.id) as any)
+      }).eq('id', checklist.id)
       setChecklist(prev => prev ? { ...prev, porcentaje_completado: pct, items_obligatorios_ok: obligOk } : prev)
     }
     setGuardando(null)
@@ -120,11 +120,11 @@ export default function ChecklistPage() {
     const ahora = new Date().toISOString()
 
     // 1. Marcar checklist como completado
-    await (supabase.from('checklists').update({
+    await (supabase.from('checklists') as any).update({
       estado: 'COMPLETADO',
       completado_at: ahora,
       porcentaje_completado: 100,
-    }).eq('id', checklist.id) as any)
+    }).eq('id', checklist.id)
 
     // 2. Generar PDF
     try {
@@ -171,8 +171,8 @@ export default function ChecklistPage() {
 
         // 4. Guardar URL en checklist y en actividad
         await Promise.all([
-          (supabase.from('checklists').update({ pdf_url: url }).eq('id', checklist.id) as any),
-          (supabase.from('actividades').update({ checklist_pdf_url: url }).eq('id_obra', idObra) as any),
+          (supabase.from('checklists') as any).update({ pdf_url: url }).eq('id', checklist.id),
+          (supabase.from('actividades') as any).update({ checklist_pdf_url: url }).eq('id_obra', idObra),
         ])
       }
     } catch (pdfErr) {
@@ -183,7 +183,7 @@ export default function ChecklistPage() {
     }
 
     // 5. Cambiar estado actividad a EJECUTADA
-    await (supabase.from('actividades').update({ estado: 'EJECUTADA' }).eq('id_obra', idObra) as any)
+    await (supabase.from('actividades') as any).update({ estado: 'EJECUTADA' }).eq('id_obra', idObra)
     router.push(`/actividades/${idObra}`)
   }
 

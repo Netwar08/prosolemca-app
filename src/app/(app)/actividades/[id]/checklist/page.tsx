@@ -53,7 +53,7 @@ export default function ChecklistPage() {
 
       if (!ch) {
         // Si no existe aún, crearlo
-        const { error: rpcErr } = await supabase.rpc('crear_checklist_desde_template', { p_id_obra: idObra })
+        const { error: rpcErr } = await (supabase as any).rpc('crear_checklist_desde_template', { p_id_obra: idObra })
         if (rpcErr) { setError('No se pudo crear el checklist: ' + rpcErr.message); setLoading(false); return }
         const { data: ch2 } = await supabase.from('checklists').select('*').eq('id_obra', idObra).single()
         setChecklist(ch2)

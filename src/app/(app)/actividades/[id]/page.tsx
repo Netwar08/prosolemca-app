@@ -88,7 +88,7 @@ export default function ActividadDetallePage() {
     }
 
     if (estadoFinal === 'EN_EJECUCION') {
-      await supabase.rpc('crear_checklist_desde_template', { p_id_obra: id })
+      await (supabase as any).rpc('crear_checklist_desde_template', { p_id_obra: id })
     }
 
     const { error } = await supabase

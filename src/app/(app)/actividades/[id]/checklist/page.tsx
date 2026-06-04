@@ -56,14 +56,14 @@ export default function ChecklistPage() {
         // Si no existe aún, crearlo
         const { error: rpcErr } = await (supabase as any).rpc('crear_checklist_desde_template', { p_id_obra: idObra })
         if (rpcErr) { setError('No se pudo crear el checklist: ' + rpcErr.message); setLoading(false); return }
-        const { data: ch2 } = await supabase.from('checklists').select('*').eq('id_obra', idObra).single()
+        const { data: ch2 } = await (supabase.from('checklists').select('*').eq('id_obra', idObra).single() as any)
         if (!ch2) { setError('No se pudo obtener el checklist creado'); setLoading(false); return }
         setChecklist(ch2)
-        const { data: its } = await supabase.from('items_checklist').select('*').eq('checklist_id', ch2.id).order('orden')
+        const { data: its } = await (supabase.from('items_checklist').select('*').eq('checklist_id', ch2.id).order('orden') as any)
         setItems(its ?? [])
       } else {
         setChecklist(ch)
-        const { data: its } = await supabase.from('items_checklist').select('*').eq('checklist_id', ch.id).order('orden')
+        const { data: its } = await (supabase.from('items_checklist').select('*').eq('checklist_id', ch.id).order('orden') as any)
         setItems(its ?? [])
       }
       setLoading(false)

@@ -56,8 +56,9 @@ export default function ChecklistPage() {
         const { error: rpcErr } = await (supabase as any).rpc('crear_checklist_desde_template', { p_id_obra: idObra })
         if (rpcErr) { setError('No se pudo crear el checklist: ' + rpcErr.message); setLoading(false); return }
         const { data: ch2 } = await supabase.from('checklists').select('*').eq('id_obra', idObra).single()
+        if (!ch2) { setError('No se pudo cargar el checklist tras crearlo'); setLoading(false); return }
         setChecklist(ch2)
-        const { data: its } = await supabase.from('items_checklist').select('*').eq('checklist_id', ch2.id).order('orden')
+        const { data: its } = await (supabase as any).from('items_checklist').select('*').eq('checklist_id', ch2.id).order('orden')
         setItems(its ?? [])
       } else {
         setChecklist(ch)
@@ -86,7 +87,7 @@ export default function ChecklistPage() {
     const pct = Math.round(respondidos.length / todosItems.length * 100)
 
     if (checklist) {
-      await supabase.from('checklists').update({
+      await (supabase as any).from('checklists').update({
         items_completados: respondidos.length,
         items_obligatorios_ok: obligOk,
         porcentaje_completado: pct,
@@ -119,7 +120,7 @@ export default function ChecklistPage() {
     const ahora = new Date().toISOString()
 
     // 1. Marcar checklist como completado
-    await supabase.from('checklists').update({
+    await (supabase as any).from('checklists').update({
       estado: 'COMPLETADO',
       completado_at: ahora,
       porcentaje_completado: 100,
@@ -170,8 +171,8 @@ export default function ChecklistPage() {
 
         // 4. Guardar URL en checklist y en actividad
         await Promise.all([
-          supabase.from('checklists').update({ pdf_url: url }).eq('id', checklist.id),
-          supabase.from('actividades').update({ checklist_pdf_url: url }).eq('id_obra', idObra),
+          (supabase as any).from('checklists').update({ pdf_url: url }).eq('id', checklist.id),
+          (supabase as any).from('actividades').update({ checklist_pdf_url: url }).eq('id_obra', idObra),
         ])
       }
     } catch (pdfErr) {
@@ -182,7 +183,7 @@ export default function ChecklistPage() {
     }
 
     // 5. Cambiar estado actividad a EJECUTADA
-    await supabase.from('actividades').update({ estado: 'EJECUTADA' }).eq('id_obra', idObra)
+    await (supabase as any).from('actividades').update({ estado: 'EJECUTADA' }).eq('id_obra', idObra)
     router.push(`/actividades/${idObra}`)
   }
 

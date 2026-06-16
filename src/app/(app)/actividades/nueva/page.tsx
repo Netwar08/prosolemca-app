@@ -76,7 +76,7 @@ export default function NuevaActividadPage() {
       ])
       setClientes(c ?? [])
       setTecnicos(t ?? [])
-      setIdObra(generarIdObra((ids ?? []).map(r => r.id_obra)))
+      setIdObra(generarIdObra((ids ?? []).map((r: any) => r.id_obra)))
 
       // Si viene con cliente pre-seleccionado, auto-completar ubicación
       if (searchParams.get('cliente') && c) {

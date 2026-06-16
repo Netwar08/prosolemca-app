@@ -48,21 +48,21 @@ export default function ChecklistPage() {
 
   useEffect(() => {
     async function cargar() {
-      const { data: ch } = await supabase
+      const { data: ch } = await (supabase as any)
         .from('checklists').select('*').eq('id_obra', idObra).single()
 
       if (!ch) {
         // Si no existe aún, crearlo
         const { error: rpcErr } = await (supabase as any).rpc('crear_checklist_desde_template', { p_id_obra: idObra })
         if (rpcErr) { setError('No se pudo crear el checklist: ' + rpcErr.message); setLoading(false); return }
-        const { data: ch2 } = await supabase.from('checklists').select('*').eq('id_obra', idObra).single()
+        const { data: ch2 } = await (supabase as any).from('checklists').select('*').eq('id_obra', idObra).single()
         if (!ch2) { setError('No se pudo cargar el checklist tras crearlo'); setLoading(false); return }
         setChecklist(ch2)
         const { data: its } = await (supabase as any).from('items_checklist').select('*').eq('checklist_id', ch2.id).order('orden')
         setItems(its ?? [])
       } else {
         setChecklist(ch)
-        const { data: its } = await supabase.from('items_checklist').select('*').eq('checklist_id', ch.id).order('orden')
+        const { data: its } = await (supabase as any).from('items_checklist').select('*').eq('checklist_id', ch.id).order('orden')
         setItems(its ?? [])
       }
       setLoading(false)

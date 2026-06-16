@@ -23,7 +23,7 @@ export default function TecnicosPage() {
 
   useEffect(() => {
     (supabase as any).from('tecnicos').select('*').order('nombre')
-      .then(({ data }) => { setTecnicos(data ?? []); setLoading(false) })
+      .then(({ data }: any) => { setTecnicos(data ?? []); setLoading(false) })
   }, [])
 
   async function toggleActivo(tecnico: Tecnico) {

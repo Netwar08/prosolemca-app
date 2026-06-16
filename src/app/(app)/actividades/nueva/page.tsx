@@ -91,11 +91,11 @@ export default function NuevaActividadPage() {
   useEffect(() => {
     if (!form.cliente_id) return
     (supabase as any).from('clientes').select('direccion').eq('id', form.cliente_id).single()
-      .then(({ data }) => {
+      .then(({ data }: any) => {
         if (data?.direccion) setForm(p => ({ ...p, ubicacion: data.direccion!, equipo_id: '' }))
       })
     (supabase as any).from('equipos').select('id, nombre, tipo').eq('cliente_id', form.cliente_id).eq('activo', true).order('nombre')
-      .then(({ data }) => setEquiposCliente(data ?? []))
+      .then(({ data }: any) => setEquiposCliente(data ?? []))
   }, [form.cliente_id])
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {

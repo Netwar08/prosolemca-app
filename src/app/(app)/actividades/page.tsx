@@ -39,7 +39,7 @@ export default function ActividadesPage() {
       .from('actividades_dashboard')
       .select('id_obra, nombre_descripcion, cliente_nombre, tecnico_nombre, tipo_trabajo, estado, fecha_inicio_estimada, fecha_fin_estimada, dias_retraso')
       .order('created_at', { ascending: false })
-      .then(({ data }) => { setFilas(data ?? []); setLoading(false) })
+      .then(({ data }: any) => { setFilas(data ?? []); setLoading(false) })
   }, [])
 
   const filtradas = filas.filter(f => {

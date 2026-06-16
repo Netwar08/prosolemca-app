@@ -153,8 +153,6 @@ export default function ChecklistPage() {
         clienteNombre:    (act as any)?.clientes?.nombre ?? 'Cliente',
         tecnicoNombre:    tII ? `${tII.nombre} ${tII.apellido}` : 'N/A',
         tecnicoINombre,
-        fechaInicio:      act?.fecha_inicio_estimada ?? ahora,
-        fechaFin:         act?.fecha_fin_estimada ?? ahora,
         items,
         completado_at:    ahora,
       })

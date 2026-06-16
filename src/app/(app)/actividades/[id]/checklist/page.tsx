@@ -12,7 +12,7 @@ type Item = {
   id: string
   orden: number
   nombre_item: string
-  tipo_respuesta: 'CHECKBOX' | 'NUMERO' | 'FOTO' | 'TEXTO' | 'DROPDOWN'
+  tipo_respuesta: 'CHECKBOX' | 'NUMERO' | 'FOTO' | 'TEXTO' | 'DROPDOWN' | 'MULTISELECT'
   opciones_dropdown: string[] | null
   obligatorio: boolean
   observacion?: string
@@ -356,6 +356,45 @@ function ItemChecklist({ item, guardando, onCheckbox, onNumero, onTexto, onDropd
                 ))}
               </select>
             )}
+
+            {item.tipo_respuesta === 'MULTISELECT' && item.opciones_dropdown && (() => {
+              const seleccionados: string[] = (() => {
+                try { return JSON.parse(item.respuesta_texto ?? '[]') } catch { return [] }
+              })()
+              return (
+                <div className="space-y-2">
+                  {item.opciones_dropdown.map(opcion => {
+                    const activo = seleccionados.includes(opcion)
+                    return (
+                      <button key={opcion} type="button" disabled={guardando}
+                        onClick={() => {
+                          const nuevos = activo
+                            ? seleccionados.filter(s => s !== opcion)
+                            : [...seleccionados, opcion]
+                          onTexto(JSON.stringify(nuevos))
+                        }}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl border-2 text-sm transition-all flex items-center gap-3 ${
+                          activo
+                            ? 'border-blue-500 bg-blue-50 text-blue-800 font-medium'
+                            : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                        }`}>
+                        <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 text-xs ${
+                          activo ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300'
+                        }`}>
+                          {activo && '✓'}
+                        </span>
+                        {opcion}
+                      </button>
+                    )
+                  })}
+                  {seleccionados.length > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Seleccionados: {seleccionados.join(', ')}
+                    </p>
+                  )}
+                </div>
+              )
+            })()}
 
             {item.tipo_respuesta === 'TEXTO' && (
               <div className="flex gap-2">

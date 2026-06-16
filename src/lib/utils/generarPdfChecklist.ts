@@ -123,6 +123,12 @@ export async function generarPdfChecklist(datos: DatosChecklist): Promise<Blob> 
       respuesta = item.respuesta_texto.length > 65 ? item.respuesta_texto.slice(0, 62) + '...' : item.respuesta_texto
     } else if (item.tipo_respuesta === 'DROPDOWN' && item.respuesta_dropdown) {
       respuesta = item.respuesta_dropdown
+    } else if (item.tipo_respuesta === 'MULTISELECT' && item.respuesta_texto) {
+      try {
+        const arr: string[] = JSON.parse(item.respuesta_texto)
+        respuesta = arr.join(', ')
+        if (respuesta.length > 65) respuesta = respuesta.slice(0, 62) + '...'
+      } catch { respuesta = item.respuesta_texto }
     }
     return [String(item.orden), item.nombre_item, item.obligatorio ? 'Sí' : 'No', respuesta, item.respondido ? '✓' : '—']
   })
@@ -235,18 +241,12 @@ export async function generarPdfChecklist(datos: DatosChecklist): Promise<Blob> 
 
     // Línea separadora
     doc.setDrawColor(200, 200, 200)
-    doc.line(margin, pageH - 22, pageW - margin, pageH - 22)
+    doc.line(margin, pageH - 16, pageW - margin, pageH - 16)
 
-    // Texto centrado de la empresa
     doc.setFontSize(9)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(40, 40, 40)
-    doc.text('Departamento de operaciones', pageW / 2, pageH - 17, { align: 'center' })
-
-    doc.setFontSize(9)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(30, 90, 160)
-    doc.text('Empresas Prosolemca', pageW / 2, pageH - 11, { align: 'center' })
+    doc.text('Departamento de operaciones', pageW / 2, pageH - 11, { align: 'center' })
 
     doc.setFontSize(8)
     doc.setFont('helvetica', 'normal')

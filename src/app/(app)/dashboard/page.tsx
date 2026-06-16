@@ -13,11 +13,123 @@ const GRUPOS_ESTADO = [
   { label: 'Retrabajos activos',       estados: ['RETRABAJO'] as EstadoActividad[] },
 ]
 
+const GRUPOS_TECNICO = [
+  { label: 'Por iniciar',   icon: '📌', estados: ['ASIGNADA'] as EstadoActividad[] },
+  { label: 'En ejecución',  icon: '⚙️',  estados: ['EN_EJECUCION'] as EstadoActividad[] },
+  { label: 'Completadas',   icon: '✅',  estados: ['EJECUTADA', 'SUPERVISADA', 'ENTREGADA_CLIENTE', 'CERRADA'] as EstadoActividad[] },
+]
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
+  const { data: perfil } = await (supabase as any)
+    .from('perfiles')
+    .select('nombre, apellido, rol, tecnico_id')
+    .eq('id', user.id)
+    .single()
+
+  const rol: string = perfil?.rol ?? 'VENTAS'
+  const isTecnico = rol === 'TECNICO_I' || rol === 'TECNICO_II'
+  const tecnicoId: string | null = (perfil as any)?.tecnico_id ?? null
+
+  // ── VISTA TÉCNICO ──────────────────────────────────────────────────────────
+  if (isTecnico) {
+    let misActividades: any[] = []
+    if (tecnicoId) {
+      const { data } = await (supabase as any)
+        .from('actividades')
+        .select(`
+          id_obra, estado, nombre_descripcion, fecha_fin_estimada,
+          clientes(nombre)
+        `)
+        .or(`tecnico_id.eq.${tecnicoId},tecnico_i_id.eq.${tecnicoId}`)
+        .not('estado', 'in', '("CERRADA","FINALIZADA","RECHAZADA")')
+        .order('fecha_fin_estimada', { ascending: true })
+      misActividades = data ?? []
+    }
+
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+    const conRetraso = misActividades.filter((a: any) => {
+      const fin = new Date(a.fecha_fin_estimada)
+      return fin < hoy && !['CERRADA', 'FINALIZADA'].includes(a.estado)
+    })
+
+    return (
+      <div className="px-4 py-6 max-w-2xl mx-auto space-y-6">
+        {/* Saludo */}
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">
+            Hola, {perfil?.nombre} 👷
+          </h1>
+          <p className="text-sm text-gray-500 mt-0.5">Estas son tus actividades asignadas</p>
+        </div>
+
+        {/* KPIs */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 mb-1">Mis activas</p>
+            <p className="text-3xl font-bold text-gray-900">{misActividades.length}</p>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-4">
+            <p className="text-xs text-gray-500 mb-1">Con retraso</p>
+            <p className="text-3xl font-bold text-red-600">{conRetraso.length}</p>
+          </div>
+        </div>
+
+        {/* Actividades con retraso (alerta) */}
+        {conRetraso.length > 0 && (
+          <section>
+            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-2">
+              <p className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-1">
+                ⚠️ Con retraso ({conRetraso.length})
+              </p>
+              <div className="space-y-2 mt-2">
+                {conRetraso.map((a: any) => (
+                  <TarjetaActividad key={a.id_obra} actividad={a} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Grupos de actividades del técnico */}
+        {GRUPOS_TECNICO.map(grupo => {
+          const items = misActividades.filter((a: any) =>
+            grupo.estados.includes(a.estado as EstadoActividad) &&
+            !conRetraso.find((r: any) => r.id_obra === a.id_obra)
+          )
+          if (items.length === 0) return null
+          return (
+            <section key={grupo.label}>
+              <div className="flex items-center gap-2 mb-2">
+                <span>{grupo.icon}</span>
+                <h2 className="text-sm font-semibold text-gray-700">{grupo.label}</h2>
+                <span className="text-xs text-gray-400 ml-auto">{items.length}</span>
+              </div>
+              <div className="space-y-2">
+                {items.map((a: any) => (
+                  <TarjetaActividad key={a.id_obra} actividad={a} />
+                ))}
+              </div>
+            </section>
+          )
+        })}
+
+        {misActividades.length === 0 && (
+          <div className="text-center py-16 text-gray-400">
+            <p className="text-4xl mb-3">📋</p>
+            <p className="font-medium text-gray-600">Sin actividades asignadas</p>
+            <p className="text-sm mt-1">Tu supervisor te asignará actividades próximamente.</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── VISTA ADMIN / SUPERVISOR ───────────────────────────────────────────────
   const { data: actividades } = await (supabase as any)
     .from('actividades_dashboard')
     .select('id_obra, estado, nombre_descripcion, cliente_nombre, tecnico_nombre, dias_retraso, tiene_retrabajo_activo')
@@ -29,7 +141,7 @@ export default async function DashboardPage() {
   }, {} as Record<string, number>)
 
   const totalActivas = (actividades ?? []).filter((a: any) => !['FINALIZADA', 'RECHAZADA'].includes(a.estado)).length
-  const conRetraso   = (actividades ?? []).filter((a: any) => a.dias_retraso > 0 && !['CERRADA', 'FINALIZADA'].includes(a.estado)).length
+  const conRetrasoAdmin = (actividades ?? []).filter((a: any) => a.dias_retraso > 0 && !['CERRADA', 'FINALIZADA'].includes(a.estado)).length
 
   return (
     <div className="px-4 py-6 max-w-3xl mx-auto space-y-6">
@@ -50,7 +162,7 @@ export default async function DashboardPage() {
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-xs text-gray-500 mb-1">Con retraso</p>
-          <p className="text-3xl font-bold text-red-600">{conRetraso}</p>
+          <p className="text-3xl font-bold text-red-600">{conRetrasoAdmin}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-xs text-gray-500 mb-1">Retrabajos</p>
@@ -102,5 +214,28 @@ export default async function DashboardPage() {
         </div>
       )}
     </div>
+  )
+}
+
+// ─── Tarjeta para el técnico ──────────────────────────────────────────────────
+function TarjetaActividad({ actividad }: { actividad: any }) {
+  const estado = ESTADOS[actividad.estado as EstadoActividad]
+  const clienteNombre = actividad.clientes?.nombre ?? '—'
+  const fechaFin = actividad.fecha_fin_estimada
+    ? new Date(actividad.fecha_fin_estimada).toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })
+    : null
+
+  return (
+    <a href={`/actividades/${actividad.id_obra}`}
+      className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3 hover:border-blue-300 transition-colors">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-gray-900 truncate">{actividad.id_obra}</p>
+        <p className="text-xs text-gray-500 truncate">{clienteNombre}</p>
+        {fechaFin && <p className="text-xs text-gray-400 mt-0.5">Vence: {fechaFin}</p>}
+      </div>
+      <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ml-3 shrink-0 ${estado?.color}`}>
+        {estado?.label}
+      </span>
+    </a>
   )
 }

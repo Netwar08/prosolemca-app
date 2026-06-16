@@ -6,12 +6,18 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-const NAV_ITEMS = [
+const NAV_ITEMS_ADMIN = [
   { href: '/dashboard',   label: 'Dashboard',    icon: '🏠', descripcion: 'Resumen de actividades' },
   { href: '/clientes',    label: 'Clientes',      icon: '👥', descripcion: 'Clientes y equipos' },
   { href: '/tecnicos',    label: 'Técnicos',      icon: '🔧', descripcion: 'Equipo técnico' },
   { href: '/actividades', label: 'Actividades',   icon: '📋', descripcion: 'Gestión de obras' },
   { href: '/retrabajos',  label: 'Retrabajos',    icon: '⚠️', descripcion: 'Garantías y retrabajos' },
+]
+
+const NAV_ITEMS_TECNICO = [
+  { href: '/dashboard',   label: 'Mi tablero',   icon: '🏠', descripcion: 'Mis actividades' },
+  { href: '/actividades', label: 'Actividades',   icon: '📋', descripcion: 'Mis obras asignadas' },
+  { href: '/clientes',    label: 'Clientes',      icon: '👥', descripcion: 'Clientes' },
 ]
 
 interface Props {
@@ -24,6 +30,8 @@ const ROL_LABELS: Record<string, string> = {
   ATC: 'ATC', TECNICO_II: 'Técnico II', TECNICO_I: 'Técnico I',
 }
 
+const ES_TECNICO = (rol: string) => rol === 'TECNICO_I' || rol === 'TECNICO_II'
+
 export default function Sidebar({ nombreUsuario, rol }: Props) {
   const pathname = usePathname()
   const router = useRouter()
@@ -33,6 +41,8 @@ export default function Sidebar({ nombreUsuario, rol }: Props) {
     await supabase.auth.signOut()
     router.push('/auth/login')
   }
+
+  const navItems = ES_TECNICO(rol) ? NAV_ITEMS_TECNICO : NAV_ITEMS_ADMIN
 
   return (
     <aside className="hidden md:flex flex-col w-60 bg-white border-r border-gray-200 shrink-0">
@@ -44,14 +54,14 @@ export default function Sidebar({ nombreUsuario, rol }: Props) {
           </div>
           <div>
             <p className="font-bold text-gray-900 text-sm leading-tight">Prosolemca</p>
-            <p className="text-xs text-gray-400">Gestión técnica</p>
+            <p className="text-xs text-gray-400">{ES_TECNICO(rol) ? 'Portal técnico' : 'Gestión técnica'}</p>
           </div>
         </div>
       </div>
 
       {/* Navegación */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {NAV_ITEMS.map(item => {
+        {navItems.map(item => {
           const activo = pathname.startsWith(item.href)
           return (
             <Link

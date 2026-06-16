@@ -5,20 +5,28 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const NAV_ITEMS = [
-  { href: '/dashboard',  label: 'Inicio',      icon: '🏠' },
-  { href: '/clientes',   label: 'Clientes',    icon: '👥' },
-  { href: '/tecnicos',   label: 'Técnicos',    icon: '🔧' },
-  { href: '/actividades',label: 'Actividades', icon: '📋' },
+const NAV_ADMIN = [
+  { href: '/dashboard',   label: 'Inicio',      icon: '🏠' },
+  { href: '/clientes',    label: 'Clientes',    icon: '👥' },
+  { href: '/tecnicos',    label: 'Técnicos',    icon: '🔧' },
+  { href: '/actividades', label: 'Actividades', icon: '📋' },
 ]
 
-export default function BottomNav() {
+const NAV_TECNICO = [
+  { href: '/dashboard',   label: 'Mi tablero',  icon: '🏠' },
+  { href: '/actividades', label: 'Actividades', icon: '📋' },
+  { href: '/clientes',    label: 'Clientes',    icon: '👥' },
+]
+
+export default function BottomNav({ rol }: { rol?: string }) {
   const pathname = usePathname()
+  const isTecnico = rol === 'TECNICO_I' || rol === 'TECNICO_II'
+  const items = isTecnico ? NAV_TECNICO : NAV_ADMIN
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-      <div className="grid grid-cols-4">
-        {NAV_ITEMS.map(item => {
+      <div className={isTecnico ? 'grid grid-cols-3' : 'grid grid-cols-4'}>
+        {items.map(item => {
           const activo = pathname.startsWith(item.href)
           return (
             <Link

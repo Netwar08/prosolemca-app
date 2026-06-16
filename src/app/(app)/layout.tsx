@@ -33,7 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
 
       {/* Bottom nav — solo visible en móvil */}
-      <BottomNav />
+      <BottomNav rol={rol} />
     </div>
   )
 }

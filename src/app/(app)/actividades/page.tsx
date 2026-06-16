@@ -28,18 +28,65 @@ const FILTROS_ESTADO: { label: string; estados: EstadoActividad[] | 'TODAS' }[] 
 ]
 
 export default function ActividadesPage() {
-  const [filas, setFilas]       = useState<Fila[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [filtro, setFiltro]     = useState<number>(0)
-  const [busqueda, setBusqueda] = useState('')
+  const [filas, setFilas]         = useState<Fila[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [filtro, setFiltro]       = useState<number>(0)
+  const [busqueda, setBusqueda]   = useState('')
+  const [isTecnico, setIsTecnico] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
-    ;(supabase as any)
-      .from('actividades_dashboard')
-      .select('id_obra, nombre_descripcion, cliente_nombre, tecnico_nombre, tipo_trabajo, estado, fecha_inicio_estimada, fecha_fin_estimada, dias_retraso')
-      .order('created_at', { ascending: false })
-      .then(({ data }: any) => { setFilas(data ?? []); setLoading(false) })
+    async function cargar() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: perfil } = await (supabase as any)
+        .from('perfiles').select('rol, tecnico_id').eq('id', user.id).single()
+
+      const rol: string = perfil?.rol ?? 'VENTAS'
+      const tecnicoId: string | null = (perfil as any)?.tecnico_id ?? null
+      const esTecnico = rol === 'TECNICO_I' || rol === 'TECNICO_II'
+      setIsTecnico(esTecnico)
+
+      if (esTecnico && tecnicoId) {
+        // Técnico: solo sus actividades
+        const { data } = await (supabase as any)
+          .from('actividades')
+          .select(`
+            id_obra, nombre_descripcion, tipo_trabajo, estado,
+            fecha_inicio_estimada, fecha_fin_estimada,
+            clientes(nombre)
+          `)
+          .or(`tecnico_id.eq.${tecnicoId},tecnico_i_id.eq.${tecnicoId}`)
+          .order('fecha_fin_estimada', { ascending: true })
+
+        const mapped = (data ?? []).map((a: any) => ({
+          id_obra: a.id_obra,
+          nombre_descripcion: a.nombre_descripcion,
+          cliente_nombre: a.clientes?.nombre ?? '—',
+          tecnico_nombre: null,
+          tipo_trabajo: a.tipo_trabajo,
+          estado: a.estado,
+          fecha_inicio_estimada: a.fecha_inicio_estimada,
+          fecha_fin_estimada: a.fecha_fin_estimada,
+          dias_retraso: (() => {
+            const hoy = new Date(); hoy.setHours(0,0,0,0)
+            const fin = new Date(a.fecha_fin_estimada)
+            return fin < hoy ? Math.floor((hoy.getTime() - fin.getTime()) / 86400000) : 0
+          })(),
+        }))
+        setFilas(mapped)
+      } else {
+        // Admin/supervisor: todas las actividades
+        const { data } = await (supabase as any)
+          .from('actividades_dashboard')
+          .select('id_obra, nombre_descripcion, cliente_nombre, tecnico_nombre, tipo_trabajo, estado, fecha_inicio_estimada, fecha_fin_estimada, dias_retraso')
+          .order('created_at', { ascending: false })
+        setFilas(data ?? [])
+      }
+      setLoading(false)
+    }
+    cargar()
   }, [])
 
   const filtradas = filas.filter(f => {
@@ -55,11 +102,15 @@ export default function ActividadesPage() {
     <div className="px-4 py-6 max-w-3xl mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Actividades</h1>
-        <a href="/actividades/nueva"
-          className="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700">
-          + Nueva
-        </a>
+        <h1 className="text-xl font-bold text-gray-900">
+          {isTecnico ? 'Mis actividades' : 'Actividades'}
+        </h1>
+        {!isTecnico && (
+          <a href="/actividades/nueva"
+            className="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700">
+            + Nueva
+          </a>
+        )}
       </div>
 
       {/* Búsqueda */}

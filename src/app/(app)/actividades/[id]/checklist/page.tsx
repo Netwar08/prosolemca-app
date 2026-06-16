@@ -131,7 +131,7 @@ export default function ChecklistPage() {
       setGenerandoPdf(true)
 
       // Obtener datos de la actividad para el PDF
-      const { data: act } = await supabase
+      const { data: act } = await (supabase as any)
         .from('actividades')
         .select('*, clientes(nombre), tecnicos!actividades_tecnico_id_fkey(nombre,apellido)')
         .eq('id_obra', idObra)
@@ -140,7 +140,7 @@ export default function ChecklistPage() {
       // Obtener nombre del Técnico I si existe
       let tecnicoINombre: string | undefined
       if ((act as any)?.tecnico_i_id) {
-        const { data: t1 } = await supabase.from('tecnicos')
+        const { data: t1 } = await (supabase as any).from('tecnicos')
           .select('nombre, apellido').eq('id', (act as any).tecnico_i_id).single()
         if (t1) tecnicoINombre = `${t1.nombre} ${t1.apellido}`
       }

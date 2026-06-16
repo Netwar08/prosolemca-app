@@ -20,7 +20,7 @@ export default function EditarTecnicoPage() {
 
   useEffect(() => {
     setLoading(true)
-    (supabase as any).from('tecnicos').select('*').eq('id', id).single()
+    ;(supabase as any).from('tecnicos').select('*').eq('id', id).single()
       .then(({ data }: any) => {
         if (data) setForm({
           nombre:   data.nombre,

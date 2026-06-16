@@ -94,7 +94,7 @@ export default function NuevaActividadPage() {
       .then(({ data }: any) => {
         if (data?.direccion) setForm(p => ({ ...p, ubicacion: data.direccion!, equipo_id: '' }))
       })
-    (supabase as any).from('equipos').select('id, nombre, tipo').eq('cliente_id', form.cliente_id).eq('activo', true).order('nombre')
+    ;(supabase as any).from('equipos').select('id, nombre, tipo').eq('cliente_id', form.cliente_id).eq('activo', true).order('nombre')
       .then(({ data }: any) => setEquiposCliente(data ?? []))
   }, [form.cliente_id])
 

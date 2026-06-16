@@ -38,6 +38,14 @@ export default function ActividadDetallePage() {
   const [modalEliminar,  setModalEliminar]  = useState(false)
   const [eliminando,     setEliminando]     = useState(false)
 
+  // Modal cambiar fechas
+  const [modalFechas,        setModalFechas]        = useState(false)
+  const [nuevaFechaInicio,   setNuevaFechaInicio]   = useState('')
+  const [nuevaFechaFin,      setNuevaFechaFin]      = useState('')
+  const [motivoCambioFechas, setMotivoCambioFechas] = useState('')
+  const [guardandoFechas,    setGuardandoFechas]    = useState(false)
+  const [historialFechas,    setHistorialFechas]    = useState<any[]>([])
+
   useEffect(() => {
     async function cargar() {
       const { data: { user } } = await supabase.auth.getUser()
@@ -52,6 +60,10 @@ export default function ActividadDetallePage() {
       setActividad(act)
       setMiRol(perfil?.rol ?? 'VENTAS')
       setHistorial(hist ?? [])
+
+      const { data: hf } = await (supabase as any).from('historial_cambio_fechas')
+        .select('*').eq('id_obra', id).order('created_at', { ascending: false })
+      setHistorialFechas(hf ?? [])
 
       if (act?.cliente_id) {
         const { data: c } = await (supabase as any).from('clientes').select('*').eq('id', act.cliente_id).single()
@@ -87,13 +99,28 @@ export default function ActividadDetallePage() {
       estadoFinal = 'ASIGNADA'
     }
 
+    // Validar checklist completado antes de pasar a EJECUTADA
+    if (estadoFinal === 'EJECUTADA') {
+      const { data: cl } = await (supabase as any).from('checklists')
+        .select('estado').eq('id_obra', id).single()
+      if (!cl || cl.estado !== 'COMPLETADO') {
+        setErrorAccion('Debes completar el checklist antes de marcar como ejecutada. Ve a "Completar checklist".')
+        setCambiando(false)
+        return
+      }
+    }
+
     if (estadoFinal === 'EN_EJECUCION') {
       await (supabase as any).rpc('crear_checklist_desde_template', { p_id_obra: id })
     }
 
+    // Guardar fecha real de inicio / fin
+    const fechasReales: Record<string, string> = {}
+    if (estadoFinal === 'EN_EJECUCION') fechasReales.fecha_real_inicio = new Date().toISOString()
+
     const { error } = await (supabase as any)
       .from('actividades')
-      .update({ estado: estadoFinal, ...(motivo ? { motivo_rechazo: motivo } : {}) })
+      .update({ estado: estadoFinal, ...(motivo ? { motivo_rechazo: motivo } : {}), ...fechasReales })
       .eq('id_obra', id)
 
     if (error) {
@@ -167,6 +194,36 @@ export default function ActividadDetallePage() {
     } else {
       router.push('/actividades')
     }
+  }
+
+  // ─── Cambiar fechas estimadas ─────────────────────────────────────────────
+  async function cambiarFechas() {
+    if (!actividad || !nuevaFechaInicio || !nuevaFechaFin || !motivoCambioFechas.trim()) return
+    setGuardandoFechas(true)
+    const { data: { user } } = await supabase.auth.getUser()
+
+    await (supabase as any).from('historial_cambio_fechas').insert({
+      id_obra:               id,
+      fecha_inicio_anterior: actividad.fecha_inicio_estimada,
+      fecha_fin_anterior:    actividad.fecha_fin_estimada,
+      fecha_inicio_nueva:    nuevaFechaInicio,
+      fecha_fin_nueva:       nuevaFechaFin,
+      motivo:                motivoCambioFechas.trim(),
+      cambiado_por:          user?.id,
+    })
+
+    await (supabase as any).from('actividades').update({
+      fecha_inicio_estimada: nuevaFechaInicio,
+      fecha_fin_estimada:    nuevaFechaFin,
+    }).eq('id_obra', id)
+
+    const { data: hf } = await (supabase as any).from('historial_cambio_fechas')
+      .select('*').eq('id_obra', id).order('created_at', { ascending: false })
+    setHistorialFechas(hf ?? [])
+    setActividad(prev => prev ? { ...prev, fecha_inicio_estimada: nuevaFechaInicio, fecha_fin_estimada: nuevaFechaFin } : prev)
+    setModalFechas(false)
+    setMotivoCambioFechas('')
+    setGuardandoFechas(false)
   }
 
   if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-400 text-sm">Cargando...</div>
@@ -337,14 +394,54 @@ export default function ActividadDetallePage() {
             )}
 
             <InfoCard titulo="Fechas y plazos">
-              <Fila label="Inicio estimado"  value={new Date(actividad.fecha_inicio_estimada).toLocaleDateString('es-VE')} />
-              <Fila label="Fin estimado"     value={new Date(actividad.fecha_fin_estimada).toLocaleDateString('es-VE')} />
-              <Fila label="Días estimados"   value={`${actividad.dias_estimados} días`} />
-              {actividad.fecha_inicio_real && (
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400 shrink-0 w-28">Inicio estimado</span>
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-sm text-gray-800">{new Date(actividad.fecha_inicio_estimada).toLocaleDateString('es-VE')}</span>
+                  {esAdmin && (
+                    <button onClick={() => {
+                      setNuevaFechaInicio(actividad.fecha_inicio_estimada)
+                      setNuevaFechaFin(actividad.fecha_fin_estimada)
+                      setModalFechas(true)
+                    }} className="text-xs text-blue-600 border border-blue-200 px-2 py-0.5 rounded-lg hover:bg-blue-50 ml-auto">
+                      Cambiar fechas
+                    </button>
+                  )}
+                </div>
+              </div>
+              <Fila label="Fin estimado"   value={new Date(actividad.fecha_fin_estimada).toLocaleDateString('es-VE')} />
+              <Fila label="Días estimados" value={`${actividad.dias_estimados} días`} />
+              {(actividad as any).fecha_real_inicio && (
+                <Fila label="★ Inicio real" value={new Date((actividad as any).fecha_real_inicio).toLocaleDateString('es-VE', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })} />
+              )}
+              {(actividad as any).fecha_real_fin && (
+                <Fila label="★ Fin real" value={new Date((actividad as any).fecha_real_fin).toLocaleDateString('es-VE', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })} />
+              )}
+              {actividad.fecha_inicio_real && !(actividad as any).fecha_real_inicio && (
                 <Fila label="Inicio real" value={new Date(actividad.fecha_inicio_real).toLocaleDateString('es-VE')} />
               )}
               {actividad.fecha_venc_garantia && (
                 <Fila label="Venc. garantía" value={new Date(actividad.fecha_venc_garantia).toLocaleDateString('es-VE')} />
+              )}
+              {historialFechas.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-100">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Log de cambios de fechas</p>
+                  <div className="space-y-2">
+                    {historialFechas.map((hf: any) => (
+                      <div key={hf.id} className="bg-gray-50 rounded-lg px-3 py-2 text-xs">
+                        <div className="flex justify-between text-gray-400 mb-0.5">
+                          <span>{new Date(hf.created_at).toLocaleDateString('es-VE', { day:'2-digit', month:'short', year:'numeric' })}</span>
+                        </div>
+                        <p className="text-gray-600">
+                          <span className="line-through text-gray-400">{hf.fecha_inicio_anterior} → {hf.fecha_fin_anterior}</span>
+                          {' '}⟶{' '}
+                          <span className="font-medium text-gray-800">{hf.fecha_inicio_nueva} → {hf.fecha_fin_nueva}</span>
+                        </p>
+                        <p className="text-gray-500 italic mt-0.5">"{hf.motivo}"</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </InfoCard>
 
@@ -513,6 +610,38 @@ export default function ActividadDetallePage() {
               className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 disabled:opacity-50">
               {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
             </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── MODAL: Cambiar fechas ─────────────────────────────────────────── */}
+      {modalFechas && (
+        <Modal titulo="Cambiar fechas estimadas">
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nueva fecha de inicio *</label>
+              <input type="date" value={nuevaFechaInicio} onChange={e => setNuevaFechaInicio(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nueva fecha de fin *</label>
+              <input type="date" value={nuevaFechaFin} onChange={e => setNuevaFechaFin(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Motivo del cambio *</label>
+              <textarea value={motivoCambioFechas} onChange={e => setMotivoCambioFechas(e.target.value)} rows={3}
+                placeholder="Explica por qué se cambian las fechas..."
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <BtnSecundario onClick={() => { setModalFechas(false); setMotivoCambioFechas('') }}>Cancelar</BtnSecundario>
+            <BtnPrimario
+              onClick={cambiarFechas}
+              disabled={!nuevaFechaInicio || !nuevaFechaFin || !motivoCambioFechas.trim() || guardandoFechas}>
+              {guardandoFechas ? 'Guardando...' : 'Guardar cambio'}
+            </BtnPrimario>
           </div>
         </Modal>
       )}

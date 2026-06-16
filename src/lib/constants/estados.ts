@@ -22,8 +22,7 @@ export const ESTADOS: Record<EstadoActividad, ConfigEstado> = {
     color: 'bg-gray-100 text-gray-700 border-gray-300',
     descripcion: 'Actividad recién creada, pendiente de validación por Valerio.',
     transicionesDesde: [
-      { estadoDestino: 'VALIDADA',  label: 'Validar',  roles: ['ADMIN', 'VALERIO'] },
-      { estadoDestino: 'RECHAZADA', label: 'Rechazar', roles: ['ADMIN', 'VALERIO'], requiereMotivo: true },
+      { estadoDestino: 'VALIDADA', label: 'Validar', roles: ['ADMIN', 'VALERIO'] },
     ],
   },
   VALIDADA: {

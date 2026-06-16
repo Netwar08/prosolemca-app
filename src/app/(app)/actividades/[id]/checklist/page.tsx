@@ -180,8 +180,11 @@ export default function ChecklistPage() {
       setGenerandoPdf(false)
     }
 
-    // 5. Cambiar estado actividad a EJECUTADA
-    await (supabase as any).from('actividades').update({ estado: 'EJECUTADA' }).eq('id_obra', idObra)
+    // 5. Cambiar estado actividad a EJECUTADA y guardar fecha real de fin
+    await (supabase as any).from('actividades').update({
+      estado: 'EJECUTADA',
+      fecha_real_fin: new Date().toISOString(),
+    }).eq('id_obra', idObra)
     router.push(`/actividades/${idObra}`)
   }
 
@@ -239,6 +242,24 @@ export default function ChecklistPage() {
       </div>
     </div>
   )
+}
+
+// ─── Validación de valores numéricos absurdos ─────────────────────────────────
+function validarNumero(nombreItem: string, valor: number): string | null {
+  const n = nombreItem.toLowerCase()
+  if ((n.includes('volt') || n.includes('tensión') || n.includes('tension')) && valor > 999)
+    return 'Verificar voltaje — valor mayor a 999 V es inusual'
+  if ((n.includes('amper') || n.includes('corriente') || n.includes(' amp')) && valor > 500)
+    return 'Verificar corriente — valor mayor a 500 A es inusual'
+  if ((n.includes('temp') || n.includes('°c') || n.includes('grados')) && (valor > 200 || valor < -50))
+    return 'Verificar temperatura — fuera del rango esperado'
+  if ((n.includes('presión') || n.includes('presion') || n.includes('psi') || n.includes(' bar')) && valor > 10000)
+    return 'Verificar presión — valor fuera de rango normal'
+  if ((n.includes('rpm') || n.includes('velocidad')) && valor > 100000)
+    return 'Verificar RPM — valor fuera de rango normal'
+  if (valor < 0 && !n.includes('temp') && !n.includes('°'))
+    return 'Verificar — valor negativo inusual para este campo'
+  return null
 }
 
 // ─── Componente de ítem individual ────────────────────────────────────────────
@@ -299,17 +320,28 @@ function ItemChecklist({ item, guardando, onCheckbox, onNumero, onTexto, onDropd
             )}
 
             {item.tipo_respuesta === 'NUMERO' && (
-              <div className="flex gap-2">
-                <input type="number" step="0.01" value={numeroLocal}
-                  onChange={e => setNumeroLocal(e.target.value)}
-                  onBlur={() => { if (numeroLocal) onNumero(parseFloat(numeroLocal)) }}
-                  placeholder="Ingresa el valor..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                {numeroLocal && (
-                  <button onClick={() => onNumero(parseFloat(numeroLocal))} disabled={guardando}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs">
-                    {guardando ? '...' : '✓'}
-                  </button>
+              <div className="space-y-1.5">
+                <div className="flex gap-2">
+                  <input type="number" step="0.01" value={numeroLocal}
+                    onChange={e => setNumeroLocal(e.target.value)}
+                    onBlur={() => { if (numeroLocal) onNumero(parseFloat(numeroLocal)) }}
+                    placeholder="Ingresa el valor..."
+                    className={`flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      numeroLocal && validarNumero(item.nombre_item, parseFloat(numeroLocal))
+                        ? 'border-red-400 bg-red-50'
+                        : 'border-gray-300'
+                    }`} />
+                  {numeroLocal && (
+                    <button onClick={() => onNumero(parseFloat(numeroLocal))} disabled={guardando}
+                      className="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs">
+                      {guardando ? '...' : '✓'}
+                    </button>
+                  )}
+                </div>
+                {numeroLocal && validarNumero(item.nombre_item, parseFloat(numeroLocal)) && (
+                  <p className="text-xs text-red-600 font-medium">
+                    ⚠️ {validarNumero(item.nombre_item, parseFloat(numeroLocal))}
+                  </p>
                 )}
               </div>
             )}

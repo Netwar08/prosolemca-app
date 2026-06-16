@@ -28,7 +28,7 @@ export default function NuevoTecnicoPage() {
     setLoading(true)
     setError(null)
 
-    const { error: err } = await supabase.from('tecnicos').insert({
+    const { error: err } = await (supabase as any).from('tecnicos').insert({
       nombre:   form.nombre,
       apellido: form.apellido,
       telefono: form.telefono || null,

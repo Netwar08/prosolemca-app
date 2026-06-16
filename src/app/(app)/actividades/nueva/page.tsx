@@ -70,9 +70,9 @@ export default function NuevaActividadPage() {
   useEffect(() => {
     async function cargarDatos() {
       const [{ data: c }, { data: t }, { data: ids }] = await Promise.all([
-        supabase.from('clientes').select('id, nombre').eq('activo', true).order('nombre'),
-        supabase.from('tecnicos').select('id, nombre, apellido, rol').eq('activo', true).order('nombre'),
-        supabase.from('actividades').select('id_obra'),
+        (supabase as any).from('clientes').select('id, nombre').eq('activo', true).order('nombre'),
+        (supabase as any).from('tecnicos').select('id, nombre, apellido, rol').eq('activo', true).order('nombre'),
+        (supabase as any).from('actividades').select('id_obra'),
       ])
       setClientes(c ?? [])
       setTecnicos(t ?? [])
@@ -90,11 +90,11 @@ export default function NuevaActividadPage() {
   // Auto-completar ubicación y cargar equipos cuando se selecciona un cliente
   useEffect(() => {
     if (!form.cliente_id) return
-    supabase.from('clientes').select('direccion').eq('id', form.cliente_id).single()
+    (supabase as any).from('clientes').select('direccion').eq('id', form.cliente_id).single()
       .then(({ data }) => {
         if (data?.direccion) setForm(p => ({ ...p, ubicacion: data.direccion!, equipo_id: '' }))
       })
-    supabase.from('equipos').select('id, nombre, tipo').eq('cliente_id', form.cliente_id).eq('activo', true).order('nombre')
+    (supabase as any).from('equipos').select('id, nombre, tipo').eq('cliente_id', form.cliente_id).eq('activo', true).order('nombre')
       .then(({ data }) => setEquiposCliente(data ?? []))
   }, [form.cliente_id])
 
@@ -137,7 +137,7 @@ export default function NuevaActividadPage() {
     if (err) { setError(err); return }
     setLoading(true); setError(null)
 
-    const { error: insertErr } = await supabase.from('actividades').insert({
+    const { error: insertErr } = await (supabase as any).from('actividades').insert({
       id_obra:                idObra,
       nombre_descripcion:     form.nombre_descripcion,
       cliente_id:             form.cliente_id,

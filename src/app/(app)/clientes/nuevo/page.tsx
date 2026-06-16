@@ -40,7 +40,7 @@ export default function NuevoClientePage() {
         if (uploadError) throw new Error('Error al subir la foto')
         foto_url = supabase.storage.from('clientes-fotos').getPublicUrl(fileName).data.publicUrl
       }
-      const { data, error: insertError } = await supabase.from('clientes').insert({
+      const { data, error: insertError } = await (supabase as any).from('clientes').insert({
         nombre: form.nombre, rif: form.rif || null, direccion: form.direccion || null,
         email: form.email || null, telefono: form.telefono || null, celular: form.celular || null,
         location_maps: form.location_maps || null, persona_contacto: form.persona_contacto || null,

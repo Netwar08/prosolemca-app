@@ -44,9 +44,9 @@ export default function ActividadDetallePage() {
       if (!user) return
 
       const [{ data: act }, { data: perfil }, { data: hist }] = await Promise.all([
-        supabase.from('actividades').select('*').eq('id_obra', id).single(),
-        supabase.from('perfiles').select('rol').eq('id', user.id).single(),
-        supabase.from('estado_transiciones').select('*').eq('id_obra', id).order('created_at', { ascending: false }),
+        (supabase as any).from('actividades').select('*').eq('id_obra', id).single(),
+        (supabase as any).from('perfiles').select('rol').eq('id', user.id).single(),
+        (supabase as any).from('estado_transiciones').select('*').eq('id_obra', id).order('created_at', { ascending: false }),
       ])
 
       setActividad(act)
@@ -54,19 +54,19 @@ export default function ActividadDetallePage() {
       setHistorial(hist ?? [])
 
       if (act?.cliente_id) {
-        const { data: c } = await supabase.from('clientes').select('*').eq('id', act.cliente_id).single()
+        const { data: c } = await (supabase as any).from('clientes').select('*').eq('id', act.cliente_id).single()
         setCliente(c)
       }
       if (act?.tecnico_id) {
-        const { data: t } = await supabase.from('tecnicos').select('*').eq('id', act.tecnico_id).single()
+        const { data: t } = await (supabase as any).from('tecnicos').select('*').eq('id', act.tecnico_id).single()
         setTecnico(t)
       }
       if ((act as any)?.tecnico_i_id) {
-        const { data: t1 } = await supabase.from('tecnicos').select('*').eq('id', (act as any).tecnico_i_id).single()
+        const { data: t1 } = await (supabase as any).from('tecnicos').select('*').eq('id', (act as any).tecnico_i_id).single()
         setTecnicoI(t1)
       }
       if (act?.equipo_id) {
-        const { data: eq } = await supabase.from('equipos').select('*').eq('id', act.equipo_id).single()
+        const { data: eq } = await (supabase as any).from('equipos').select('*').eq('id', act.equipo_id).single()
         setEquipo(eq)
       }
       setLoading(false)
@@ -111,7 +111,7 @@ export default function ActividadDetallePage() {
 
   // ─── Asignar técnico ─────────────────────────────────────────────────────
   async function abrirModalTecnico() {
-    const { data } = await supabase.from('tecnicos').select('*').eq('activo', true).order('nombre')
+    const { data } = await (supabase as any).from('tecnicos').select('*').eq('activo', true).order('nombre')
     setTecnicosDisp(data ?? [])
     setTecnicoIISel(actividad?.tecnico_id ?? '')
     setTecnicoISel((actividad as any)?.tecnico_i_id ?? '')
@@ -159,7 +159,7 @@ export default function ActividadDetallePage() {
   // ─── Eliminar actividad ───────────────────────────────────────────────────
   async function eliminarActividad() {
     setEliminando(true)
-    const { error } = await supabase.from('actividades').delete().eq('id_obra', id)
+    const { error } = await (supabase as any).from('actividades').delete().eq('id_obra', id)
     if (error) {
       setErrorAccion(`Error al eliminar: ${error.message}`)
       setEliminando(false)

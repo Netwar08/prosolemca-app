@@ -40,10 +40,10 @@ export default function EditarActividadPage() {
       if (!user) return
 
       const [{ data: act }, { data: perfil }, { data: cls }, { data: tecs }] = await Promise.all([
-        supabase.from('actividades').select('*').eq('id_obra', id).single(),
-        supabase.from('perfiles').select('rol').eq('id', user.id).single(),
-        supabase.from('clientes').select('id, nombre').eq('activo', true).order('nombre'),
-        supabase.from('tecnicos').select('*').eq('activo', true).order('nombre'),
+        (supabase as any).from('actividades').select('*').eq('id_obra', id).single(),
+        (supabase as any).from('perfiles').select('rol').eq('id', user.id).single(),
+        (supabase as any).from('clientes').select('id, nombre').eq('activo', true).order('nombre'),
+        (supabase as any).from('tecnicos').select('*').eq('activo', true).order('nombre'),
       ])
 
       setMiRol(perfil?.rol ?? 'VENTAS')
@@ -66,7 +66,7 @@ export default function EditarActividadPage() {
         })
         // Cargar equipos del cliente
         if (act.cliente_id) {
-          const { data: eqs } = await supabase.from('equipos')
+          const { data: eqs } = await (supabase as any).from('equipos')
             .select('id, nombre, tipo').eq('cliente_id', act.cliente_id).eq('activo', true)
           setEquiposCliente(eqs ?? [])
         }
@@ -96,7 +96,7 @@ export default function EditarActividadPage() {
     const estadoActual = actActual?.estado ?? ''
     const debeRetroceder = sinTecnico && estadosConTecnico.includes(estadoActual)
 
-    const { error: err } = await supabase.from('actividades').update({
+    const { error: err } = await (supabase as any).from('actividades').update({
       nombre_descripcion:    form.nombre_descripcion,
       cliente_id:            form.cliente_id,
       equipo_id:             form.equipo_id || null,
@@ -151,7 +151,7 @@ export default function EditarActividadPage() {
           <F label="Cliente *">
             <select name="cliente_id" value={form.cliente_id} onChange={async e => {
               handleChange(e)
-              const { data } = await supabase.from('equipos').select('id, nombre, tipo')
+              const { data } = await (supabase as any).from('equipos').select('id, nombre, tipo')
                 .eq('cliente_id', e.target.value).eq('activo', true)
               setEquiposCliente(data ?? [])
               setForm(p => ({ ...p, cliente_id: e.target.value, equipo_id: '' }))

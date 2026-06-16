@@ -22,12 +22,12 @@ export default function TecnicosPage() {
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.from('tecnicos').select('*').order('nombre')
+    (supabase as any).from('tecnicos').select('*').order('nombre')
       .then(({ data }) => { setTecnicos(data ?? []); setLoading(false) })
   }, [])
 
   async function toggleActivo(tecnico: Tecnico) {
-    await supabase.from('tecnicos').update({ activo: !tecnico.activo }).eq('id', tecnico.id)
+    await (supabase as any).from('tecnicos').update({ activo: !tecnico.activo }).eq('id', tecnico.id)
     setTecnicos(prev => prev.map(t => t.id === tecnico.id ? { ...t, activo: !t.activo } : t))
   }
 

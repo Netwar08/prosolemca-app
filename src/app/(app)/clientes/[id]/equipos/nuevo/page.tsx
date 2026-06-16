@@ -40,7 +40,7 @@ export default function NuevoEquipoPage() {
         await supabase.storage.from('equipos-fotos').upload(fileName, fotoFile)
         foto_url = supabase.storage.from('equipos-fotos').getPublicUrl(fileName).data.publicUrl
       }
-      const { error: err } = await supabase.from('equipos').insert({
+      const { error: err } = await (supabase as any).from('equipos').insert({
         cliente_id: clienteId, nombre: form.nombre, tipo: form.tipo as TipoEquipo,
         marca: form.marca, modelo: form.modelo || null, numero_serie: form.numero_serie || null,
         fecha_ultimo_mantenimiento: form.fecha_ultimo_mantenimiento || null,

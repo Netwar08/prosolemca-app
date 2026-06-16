@@ -20,7 +20,7 @@ export default function EditarTecnicoPage() {
 
   useEffect(() => {
     setLoading(true)
-    supabase.from('tecnicos').select('*').eq('id', id).single()
+    (supabase as any).from('tecnicos').select('*').eq('id', id).single()
       .then(({ data }) => {
         if (data) setForm({
           nombre:   data.nombre,
@@ -41,7 +41,7 @@ export default function EditarTecnicoPage() {
     e.preventDefault()
     setSaving(true)
     setError(null)
-    const { error: err } = await supabase.from('tecnicos').update({
+    const { error: err } = await (supabase as any).from('tecnicos').update({
       nombre:   form.nombre,
       apellido: form.apellido,
       telefono: form.telefono || null,

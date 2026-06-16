@@ -12,7 +12,7 @@ export default function ClientesPage() {
 
   useEffect(() => {
     async function cargar() {
-      const { data } = await supabase.from('clientes').select('*').eq('activo', true).order('nombre')
+      const { data } = await (supabase as any).from('clientes').select('*').eq('activo', true).order('nombre')
       setClientes(data ?? [])
       setLoading(false)
     }

@@ -80,7 +80,7 @@ export default function NuevaActividadPage() {
 
       // Si viene con cliente pre-seleccionado, auto-completar ubicación
       if (searchParams.get('cliente') && c) {
-        const cli = c.find(x => x.id === searchParams.get('cliente'))
+        const cli = c.find((x: any) => x.id === searchParams.get('cliente'))
         // Podríamos auto-completar ubicación si el cliente tiene dirección
       }
     }

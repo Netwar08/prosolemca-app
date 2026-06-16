@@ -35,7 +35,7 @@ export default function ActividadesPage() {
   const supabase = createClient()
 
   useEffect(() => {
-    supabase
+    ;(supabase as any)
       .from('actividades_dashboard')
       .select('id_obra, nombre_descripcion, cliente_nombre, tecnico_nombre, tipo_trabajo, estado, fecha_inicio_estimada, fecha_fin_estimada, dias_retraso')
       .order('created_at', { ascending: false })

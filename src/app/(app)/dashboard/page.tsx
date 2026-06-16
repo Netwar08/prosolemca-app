@@ -23,13 +23,13 @@ export default async function DashboardPage() {
     .select('id_obra, estado, nombre_descripcion, cliente_nombre, tecnico_nombre, dias_retraso, tiene_retrabajo_activo')
     .order('created_at', { ascending: false })
 
-  const conteo = (actividades ?? []).reduce((acc, a) => {
+  const conteo = (actividades ?? []).reduce((acc: Record<string, number>, a: any) => {
     acc[a.estado] = (acc[a.estado] || 0) + 1
     return acc
   }, {} as Record<string, number>)
 
-  const totalActivas = (actividades ?? []).filter(a => !['FINALIZADA', 'RECHAZADA'].includes(a.estado)).length
-  const conRetraso   = (actividades ?? []).filter(a => a.dias_retraso > 0 && !['CERRADA', 'FINALIZADA'].includes(a.estado)).length
+  const totalActivas = (actividades ?? []).filter((a: any) => !['FINALIZADA', 'RECHAZADA'].includes(a.estado)).length
+  const conRetraso   = (actividades ?? []).filter((a: any) => a.dias_retraso > 0 && !['CERRADA', 'FINALIZADA'].includes(a.estado)).length
 
   return (
     <div className="px-4 py-6 max-w-3xl mx-auto space-y-6">
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
 
       {/* Grupos de actividades */}
       {GRUPOS_ESTADO.map(grupo => {
-        const items = (actividades ?? []).filter(a => grupo.estados.includes(a.estado as EstadoActividad))
+        const items = (actividades ?? []).filter((a: any) => grupo.estados.includes(a.estado as EstadoActividad))
         if (items.length === 0) return null
         return (
           <section key={grupo.label}>
@@ -69,7 +69,7 @@ export default async function DashboardPage() {
               <span className="text-xs text-gray-400">{items.length}</span>
             </div>
             <div className="space-y-2">
-              {items.slice(0, 5).map(a => (
+              {items.slice(0, 5).map((a: any) => (
                 <a key={a.id_obra} href={`/actividades/${a.id_obra}`}
                   className="flex items-center justify-between bg-white rounded-xl border border-gray-200 px-4 py-3 hover:border-blue-300 transition-colors">
                   <div className="min-w-0">

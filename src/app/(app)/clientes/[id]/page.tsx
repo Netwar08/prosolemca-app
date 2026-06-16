@@ -18,9 +18,9 @@ export default function ClienteDetallePage() {
   useEffect(() => {
     async function cargar() {
       const [{ data: c }, { data: e }, { data: a }] = await Promise.all([
-        supabase.from('clientes').select('*').eq('id', id).single(),
-        supabase.from('equipos').select('*').eq('cliente_id', id).eq('activo', true).order('nombre'),
-        supabase.from('actividades').select('*').eq('cliente_id', id).order('created_at', { ascending: false }).limit(20),
+        (supabase as any).from('clientes').select('*').eq('id', id).single(),
+        (supabase as any).from('equipos').select('*').eq('cliente_id', id).eq('activo', true).order('nombre'),
+        (supabase as any).from('actividades').select('*').eq('cliente_id', id).order('created_at', { ascending: false }).limit(20),
       ])
       setCliente(c); setEquipos(e ?? []); setActividades(a ?? [])
       setLoading(false)

@@ -30,7 +30,6 @@ type ChecklistHeader = {
   porcentaje_completado: number
   items_obligatorios: number
   items_obligatorios_ok: number
-  tipo_trabajo?: string
 }
 
 export default function ChecklistPage() {
@@ -49,20 +48,20 @@ export default function ChecklistPage() {
 
   useEffect(() => {
     async function cargar() {
-      const { data: ch } = await (supabase.from('checklists').select('*').eq('id_obra', idObra).single() as any)
+      const { data: ch } = await supabase
+        .from('checklists').select('*').eq('id_obra', idObra).single()
 
       if (!ch) {
         // Si no existe aún, crearlo
         const { error: rpcErr } = await (supabase as any).rpc('crear_checklist_desde_template', { p_id_obra: idObra })
         if (rpcErr) { setError('No se pudo crear el checklist: ' + rpcErr.message); setLoading(false); return }
-        const { data: ch2 } = await (supabase.from('checklists').select('*').eq('id_obra', idObra).single() as any)
-        if (!ch2) { setError('No se pudo obtener el checklist creado'); setLoading(false); return }
+        const { data: ch2 } = await supabase.from('checklists').select('*').eq('id_obra', idObra).single()
         setChecklist(ch2)
-        const { data: its } = await (supabase.from('items_checklist').select('*').eq('checklist_id', ch2.id).order('orden') as any)
+        const { data: its } = await supabase.from('items_checklist').select('*').eq('checklist_id', ch2.id).order('orden')
         setItems(its ?? [])
       } else {
-        setChecklist(ch as ChecklistHeader)
-        const { data: its } = await (supabase.from('items_checklist').select('*').eq('checklist_id', (ch as ChecklistHeader).id).order('orden') as any)
+        setChecklist(ch)
+        const { data: its } = await supabase.from('items_checklist').select('*').eq('checklist_id', ch.id).order('orden')
         setItems(its ?? [])
       }
       setLoading(false)
@@ -75,7 +74,7 @@ export default function ChecklistPage() {
     const update: any = { respondido: true, respondido_at: new Date().toISOString() }
     update[campo] = valor
 
-    await (supabase.from('items_checklist') as any).update(update).eq('id', item.id)
+    await (supabase as any).from('items_checklist').update(update).eq('id', item.id)
 
     // Actualizar estado local
     setItems(prev => prev.map(i => i.id === item.id ? { ...i, [campo]: valor, respondido: true } : i))
@@ -87,7 +86,7 @@ export default function ChecklistPage() {
     const pct = Math.round(respondidos.length / todosItems.length * 100)
 
     if (checklist) {
-      await (supabase.from('checklists') as any).update({
+      await supabase.from('checklists').update({
         items_completados: respondidos.length,
         items_obligatorios_ok: obligOk,
         porcentaje_completado: pct,
@@ -120,7 +119,7 @@ export default function ChecklistPage() {
     const ahora = new Date().toISOString()
 
     // 1. Marcar checklist como completado
-    await (supabase.from('checklists') as any).update({
+    await supabase.from('checklists').update({
       estado: 'COMPLETADO',
       completado_at: ahora,
       porcentaje_completado: 100,
@@ -131,17 +130,17 @@ export default function ChecklistPage() {
       setGenerandoPdf(true)
 
       // Obtener datos de la actividad para el PDF
-      const { data: act } = await (supabase
+      const { data: act } = await supabase
         .from('actividades')
         .select('*, clientes(nombre), tecnicos!actividades_tecnico_id_fkey(nombre,apellido)')
         .eq('id_obra', idObra)
-        .single() as any)
+        .single()
 
       // Obtener nombre del Técnico I si existe
       let tecnicoINombre: string | undefined
       if ((act as any)?.tecnico_i_id) {
-        const { data: t1 } = await (supabase.from('tecnicos')
-          .select('nombre, apellido').eq('id', (act as any).tecnico_i_id).single() as any)
+        const { data: t1 } = await supabase.from('tecnicos')
+          .select('nombre, apellido').eq('id', (act as any).tecnico_i_id).single()
         if (t1) tecnicoINombre = `${t1.nombre} ${t1.apellido}`
       }
 
@@ -149,7 +148,7 @@ export default function ChecklistPage() {
       const pdfBlob = await generarPdfChecklist({
         idObra,
         numeroCotizacion: (act as any)?.numero_cotizacion ?? undefined,
-        tipoTrabajo:      checklist.tipo_trabajo as TipoTrabajo,
+        tipoTrabajo:      (checklist as any).tipo_trabajo as TipoTrabajo,
         clienteNombre:    (act as any)?.clientes?.nombre ?? 'Cliente',
         tecnicoNombre:    tII ? `${tII.nombre} ${tII.apellido}` : 'N/A',
         tecnicoINombre,
@@ -171,8 +170,8 @@ export default function ChecklistPage() {
 
         // 4. Guardar URL en checklist y en actividad
         await Promise.all([
-          (supabase.from('checklists') as any).update({ pdf_url: url }).eq('id', checklist.id),
-          (supabase.from('actividades') as any).update({ checklist_pdf_url: url }).eq('id_obra', idObra),
+          supabase.from('checklists').update({ pdf_url: url }).eq('id', checklist.id),
+          supabase.from('actividades').update({ checklist_pdf_url: url }).eq('id_obra', idObra),
         ])
       }
     } catch (pdfErr) {
@@ -183,7 +182,7 @@ export default function ChecklistPage() {
     }
 
     // 5. Cambiar estado actividad a EJECUTADA
-    await (supabase.from('actividades') as any).update({ estado: 'EJECUTADA' }).eq('id_obra', idObra)
+    await supabase.from('actividades').update({ estado: 'EJECUTADA' }).eq('id_obra', idObra)
     router.push(`/actividades/${idObra}`)
   }
 

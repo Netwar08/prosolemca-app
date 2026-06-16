@@ -91,7 +91,7 @@ export default function ActividadDetallePage() {
       await (supabase as any).rpc('crear_checklist_desde_template', { p_id_obra: id })
     }
 
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('actividades')
       .update({ estado: estadoFinal, ...(motivo ? { motivo_rechazo: motivo } : {}) })
       .eq('id_obra', id)
@@ -100,7 +100,7 @@ export default function ActividadDetallePage() {
       setErrorAccion(`Error: ${error.message}`)
     } else {
       setActividad(prev => prev ? { ...prev, estado: estadoFinal as any } : prev)
-      const { data: hist } = await supabase
+      const { data: hist } = await (supabase as any)
         .from('estado_transiciones').select('*').eq('id_obra', id).order('created_at', { ascending: false })
       setHistorial(hist ?? [])
     }
@@ -126,7 +126,7 @@ export default function ActividadDetallePage() {
     }
     setCambiando(true)
     setErrorAccion(null)
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('actividades')
       .update({
         tecnico_id:   tecnicoIISel || null,
@@ -148,7 +148,7 @@ export default function ActividadDetallePage() {
         tecnico_i_id: tecnicoISel  || null,
         estado: 'ASIGNADA' as any,
       } : prev)
-      const { data: hist } = await supabase
+      const { data: hist } = await (supabase as any)
         .from('estado_transiciones').select('*').eq('id_obra', id).order('created_at', { ascending: false })
       setHistorial(hist ?? [])
     }

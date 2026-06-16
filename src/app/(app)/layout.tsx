@@ -11,7 +11,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: perfil } = await supabase
+  const { data: perfil } = await (supabase as any)
     .from('perfiles')
     .select('nombre, apellido, rol')
     .eq('id', user.id)

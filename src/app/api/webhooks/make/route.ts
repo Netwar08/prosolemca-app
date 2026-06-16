@@ -32,7 +32,7 @@ export async function GET(request: Request) {
   const supabase = await createClient()
 
   // Obtener actividad con todos los datos relacionados
-  const { data: act, error } = await supabase
+  const { data: act, error } = await (supabase as any)
     .from('actividades')
     .select('*')
     .eq('id_obra', id_obra)
@@ -43,28 +43,28 @@ export async function GET(request: Request) {
   }
 
   // Obtener cliente
-  const { data: cliente } = await supabase
+  const { data: cliente } = await (supabase as any)
     .from('clientes')
     .select('nombre, email, celular, telefono, persona_contacto, direccion')
     .eq('id', act.cliente_id)
     .single()
 
   // Obtener Técnico II
-  const { data: tecnicoII } = act.tecnico_id ? await supabase
+  const { data: tecnicoII } = act.tecnico_id ? await (supabase as any)
     .from('tecnicos')
     .select('nombre, apellido, telefono')
     .eq('id', act.tecnico_id)
     .single() : { data: null }
 
   // Obtener Técnico I
-  const { data: tecnicoI } = (act as any).tecnico_i_id ? await supabase
+  const { data: tecnicoI } = (act as any).tecnico_i_id ? await (supabase as any)
     .from('tecnicos')
     .select('nombre, apellido, telefono')
     .eq('id', (act as any).tecnico_i_id)
     .single() : { data: null }
 
   // Obtener última transición de estado
-  const { data: ultimaTransicion } = await supabase
+  const { data: ultimaTransicion } = await (supabase as any)
     .from('estado_transiciones')
     .select('estado_anterior, estado_nuevo, created_at')
     .eq('id_obra', id_obra)

@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
 
-  const { data: actividades } = await supabase
+  const { data: actividades } = await (supabase as any)
     .from('actividades_dashboard')
     .select('id_obra, estado, nombre_descripcion, cliente_nombre, tecnico_nombre, dias_retraso, tiene_retrabajo_activo')
     .order('created_at', { ascending: false })

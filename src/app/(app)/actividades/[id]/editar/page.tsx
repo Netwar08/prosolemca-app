@@ -88,7 +88,7 @@ export default function EditarActividadPage() {
     const estadosConTecnico = ['ASIGNADA', 'EN_EJECUCION', 'EJECUTADA', 'SUPERVISADA', 'ENTREGADA_CLIENTE']
 
     // Obtener estado actual
-    const { data: actActual } = await supabase
+    const { data: actActual } = await (supabase as any)
       .from('actividades').select('estado').eq('id_obra', id).single()
 
     // Si se quitó el técnico y el estado requiere uno → volver a VALIDADA

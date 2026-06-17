@@ -19,7 +19,13 @@ export default function NuevoTecnicoPage() {
     rol:      'TECNICO_II' as 'TECNICO_I' | 'TECNICO_II',
   })
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+  // Credenciales de acceso
+  const [crearAcceso,  setCrearAcceso]  = useState(true)
+  const [emailAcceso,  setEmailAcceso]  = useState('')
+  const [password,     setPassword]     = useState('')
+  const [verPassword,  setVerPassword]  = useState(false)
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
@@ -28,16 +34,54 @@ export default function NuevoTecnicoPage() {
     setLoading(true)
     setError(null)
 
-    const { error: err } = await (supabase as any).from('tecnicos').insert({
-      nombre:   form.nombre,
-      apellido: form.apellido,
-      telefono: form.telefono || null,
-      email:    form.email    || null,
-      rol:      form.rol,
-      activo:   true,
-    })
+    if (crearAcceso && (!emailAcceso || password.length < 6)) {
+      setError('El email y la contraseña (mín. 6 caracteres) son obligatorios para crear acceso.')
+      setLoading(false)
+      return
+    }
 
-    if (err) { setError(err.message); setLoading(false); return }
+    // 1. Crear técnico
+    const { data: tecnico, error: errTec } = await (supabase as any)
+      .from('tecnicos')
+      .insert({
+        nombre:   form.nombre,
+        apellido: form.apellido,
+        telefono: form.telefono || null,
+        email:    emailAcceso || form.email || null,
+        rol:      form.rol,
+        activo:   true,
+      })
+      .select('id')
+      .single()
+
+    if (errTec || !tecnico) {
+      setError(errTec?.message ?? 'Error al crear técnico')
+      setLoading(false)
+      return
+    }
+
+    // 2. Crear credenciales si se solicitó
+    if (crearAcceso) {
+      const res = await fetch('/api/tecnicos/credenciales', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tecnico_id: tecnico.id,
+          email:      emailAcceso,
+          password,
+          nombre:     form.nombre,
+          apellido:   form.apellido,
+          rol:        form.rol,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok || !json.ok) {
+        setError(`Técnico creado pero error en credenciales: ${json.error}`)
+        setLoading(false)
+        return
+      }
+    }
+
     router.push('/tecnicos')
   }
 
@@ -49,10 +93,12 @@ export default function NuevoTecnicoPage() {
           <h1 className="text-lg font-bold text-gray-900">Nuevo técnico</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* Rol — selección visual primero */}
+          {/* Datos del técnico */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Datos personales</p>
+
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">Rol *</p>
               <div className="grid grid-cols-2 gap-3">
@@ -63,8 +109,7 @@ export default function NuevoTecnicoPage() {
                       form.rol === r
                         ? 'border-blue-600 bg-blue-50 text-blue-700'
                         : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                    }`}
-                  >
+                    }`}>
                     <p>{r === 'TECNICO_II' ? 'Técnico II' : 'Técnico I'}</p>
                     <p className="text-xs font-normal mt-0.5 text-gray-400">
                       {r === 'TECNICO_II' ? 'Senior / responsable' : 'Asistente'}
@@ -82,23 +127,56 @@ export default function NuevoTecnicoPage() {
               <input name="apellido" value={form.apellido} onChange={handleChange} required
                 placeholder="Ej: Bermúdez" className={inp} />
             </F>
-            <F label="Teléfono / Celular">
+            <F label="Teléfono">
               <input name="telefono" value={form.telefono} onChange={handleChange}
-                placeholder="Ej: 0414-000-0000" className={inp} />
-            </F>
-            <F label="Email">
-              <input name="email" type="email" value={form.email} onChange={handleChange}
-                placeholder="tecnico@empresa.com" className={inp} />
+                placeholder="0414-000-0000" className={inp} />
             </F>
           </div>
 
+          {/* Acceso al sistema */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Acceso al sistema</p>
+                <p className="text-xs text-gray-400">El técnico podrá iniciar sesión en la app</p>
+              </div>
+              <button type="button" onClick={() => setCrearAcceso(v => !v)}
+                className={`relative w-11 h-6 rounded-full transition-colors ${crearAcceso ? 'bg-blue-600' : 'bg-gray-300'}`}>
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${crearAcceso ? 'translate-x-5' : ''}`} />
+              </button>
+            </div>
+
+            {crearAcceso && (
+              <div className="space-y-3 pt-1">
+                <F label="Email de acceso *">
+                  <input type="email" value={emailAcceso} onChange={e => setEmailAcceso(e.target.value)}
+                    placeholder="tecnico@prosolemca.com" className={inp} required={crearAcceso} />
+                </F>
+                <F label="Contraseña *">
+                  <div className="relative">
+                    <input type={verPassword ? 'text' : 'password'}
+                      value={password} onChange={e => setPassword(e.target.value)}
+                      placeholder="Mínimo 6 caracteres" className={inp} required={crearAcceso} />
+                    <button type="button" onClick={() => setVerPassword(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs hover:text-gray-600">
+                      {verPassword ? 'Ocultar' : 'Ver'}
+                    </button>
+                  </div>
+                </F>
+                <p className="text-xs text-gray-400">
+                  El técnico usará estas credenciales para iniciar sesión.
+                </p>
+              </div>
+            )}
+          </div>
+
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-3 py-2">{error}</div>
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-3 py-2">{error}</div>
           )}
 
           <button type="submit" disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-3 rounded-xl text-sm">
-            {loading ? 'Guardando...' : 'Guardar técnico'}
+            {loading ? 'Guardando...' : crearAcceso ? 'Crear técnico y acceso' : 'Crear técnico'}
           </button>
         </form>
       </div>

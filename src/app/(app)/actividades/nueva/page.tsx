@@ -122,11 +122,9 @@ export default function NuevaActividadPage() {
     if (!form.tipo_trabajo)        return 'Selecciona el tipo de trabajo'
     if (!form.fecha_inicio_estimada) return 'Ingresa la fecha de inicio'
     if (!form.fecha_fin_estimada)    return 'Ingresa la fecha de fin'
-    const inicio = new Date(form.fecha_inicio_estimada)
-    const fin    = new Date(form.fecha_fin_estimada)
-    const hoy    = new Date(); hoy.setHours(0,0,0,0)
-    if (inicio < hoy) return 'La fecha de inicio no puede ser en el pasado'
-    if (fin < inicio) return 'La fecha de fin no puede ser anterior al inicio'
+    const hoyStr = new Date().toISOString().slice(0, 10)
+    if (form.fecha_inicio_estimada < hoyStr) return 'La fecha de inicio no puede ser en el pasado'
+    if (form.fecha_fin_estimada < form.fecha_inicio_estimada) return 'La fecha de fin no puede ser anterior al inicio'
     if (parseInt(form.tiempo_garantia_meses) < 0) return 'La garantía no puede ser negativa'
     return null
   }

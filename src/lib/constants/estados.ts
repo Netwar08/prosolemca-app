@@ -121,6 +121,7 @@ export const TIPOS_TRABAJO_LABELS: Record<string, string> = {
   INSTALACION_FILTROS_AGUA:         'Instalación de Filtros de Agua',
   MANTENIMIENTO_FILTROS_AGUA:       'Mantenimiento de Filtros de Agua',
   LIMPIEZA_DESINFECCION_TANQUES:    'Limpieza y Desinfección de Tanques',
+  PLOMERIA:                         'Plomería',
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

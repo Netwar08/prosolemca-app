@@ -126,7 +126,7 @@ export default function NuevaActividadPage() {
     const fin    = new Date(form.fecha_fin_estimada)
     const hoy    = new Date(); hoy.setHours(0,0,0,0)
     if (inicio < hoy) return 'La fecha de inicio no puede ser en el pasado'
-    if (fin <= inicio) return 'La fecha de fin debe ser posterior al inicio'
+    if (fin < inicio) return 'La fecha de fin no puede ser anterior al inicio'
     if (parseInt(form.tiempo_garantia_meses) < 0) return 'La garantía no puede ser negativa'
     return null
   }

@@ -216,18 +216,25 @@ export default function ChecklistPage() {
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-4 space-y-3 pb-32">
-        {items.map(item => (
-          <ItemChecklist
-            key={item.id}
-            item={item}
-            guardando={guardando === item.id}
-            onCheckbox={val => guardarRespuesta(item, 'respuesta_checkbox', val)}
-            onNumero={val => guardarRespuesta(item, 'respuesta_numero', val)}
-            onTexto={val => guardarRespuesta(item, 'respuesta_texto', val)}
-            onDropdown={val => guardarRespuesta(item, 'respuesta_dropdown', val)}
-            onFoto={file => subirFoto(item, file)}
-          />
-        ))}
+        {items.map(item => {
+          // Campo condicional: "Observaciones de alineación" solo si tubería NO está 100% alineada
+          if (item.nombre_item === 'Observaciones de alineación') {
+            const tuberia = items.find(i => i.nombre_item === 'Tubería 100% alineada')
+            if (!tuberia || tuberia.respuesta_checkbox !== false) return null
+          }
+          return (
+            <ItemChecklist
+              key={item.id}
+              item={item}
+              guardando={guardando === item.id}
+              onCheckbox={val => guardarRespuesta(item, 'respuesta_checkbox', val)}
+              onNumero={val => guardarRespuesta(item, 'respuesta_numero', val)}
+              onTexto={val => guardarRespuesta(item, 'respuesta_texto', val)}
+              onDropdown={val => guardarRespuesta(item, 'respuesta_dropdown', val)}
+              onFoto={file => subirFoto(item, file)}
+            />
+          )
+        })}
       </div>
 
       {/* Botón flotante al fondo */}

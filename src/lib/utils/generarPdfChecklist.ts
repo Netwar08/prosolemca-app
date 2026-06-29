@@ -114,48 +114,42 @@ export async function generarPdfChecklist(datos: DatosChecklist): Promise<Blob> 
   const itemsConFoto = datos.items.filter(i => i.tipo_respuesta === 'FOTO' && i.foto_url)
 
   const filas = itemsSinFoto.map(item => {
-    let respuesta = '—'
+    let respuesta = '-'
     if (item.tipo_respuesta === 'CHECKBOX') {
-      respuesta = item.respuesta_checkbox === true ? '✓ SÍ' : item.respuesta_checkbox === false ? '✗ NO' : '—'
+      respuesta = item.respuesta_checkbox === true ? 'Si' : item.respuesta_checkbox === false ? 'No' : '-'
     } else if (item.tipo_respuesta === 'NUMERO' && item.respuesta_numero !== null) {
       respuesta = String(item.respuesta_numero)
     } else if (item.tipo_respuesta === 'TEXTO' && item.respuesta_texto) {
-      respuesta = item.respuesta_texto.length > 65 ? item.respuesta_texto.slice(0, 62) + '...' : item.respuesta_texto
+      respuesta = item.respuesta_texto.length > 80 ? item.respuesta_texto.slice(0, 77) + '...' : item.respuesta_texto
     } else if (item.tipo_respuesta === 'DROPDOWN' && item.respuesta_dropdown) {
       respuesta = item.respuesta_dropdown
     } else if (item.tipo_respuesta === 'MULTISELECT' && item.respuesta_texto) {
       try {
         const arr: string[] = JSON.parse(item.respuesta_texto)
         respuesta = arr.join(', ')
-        if (respuesta.length > 65) respuesta = respuesta.slice(0, 62) + '...'
+        if (respuesta.length > 80) respuesta = respuesta.slice(0, 77) + '...'
       } catch { respuesta = item.respuesta_texto }
     }
-    return [String(item.orden), item.nombre_item, item.obligatorio ? 'Sí' : 'No', respuesta, item.respondido ? '✓' : '—']
+    return [String(item.orden), item.nombre_item, respuesta]
   })
 
   autoTable(doc, {
     startY: y,
-    head: [['#', 'Ítem de verificación', 'Oblig.', 'Respuesta', 'OK']],
+    head: [['#', 'Item de verificacion', 'Respuesta']],
     body: filas,
     margin: { left: margin, right: margin },
     styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
     headStyles: { fillColor: [30, 90, 160], textColor: 255, fontStyle: 'bold', fontSize: 8 },
     columnStyles: {
       0: { cellWidth: 8,  halign: 'center' },
-      1: { cellWidth: 92 },
-      2: { cellWidth: 14, halign: 'center' },
-      3: { cellWidth: 53 },
-      4: { cellWidth: 10, halign: 'center' },
+      1: { cellWidth: 119 },
+      2: { cellWidth: 50 },
     },
     alternateRowStyles: { fillColor: [245, 248, 255] },
     didParseCell: (data) => {
-      if (data.column.index === 4 && data.cell.raw === '✓') {
-        data.cell.styles.textColor = [22, 163, 74]
-        data.cell.styles.fontStyle = 'bold'
-      }
-      if (data.column.index === 3) {
-        if (String(data.cell.raw).startsWith('✓')) data.cell.styles.textColor = [22, 163, 74]
-        if (String(data.cell.raw).startsWith('✗')) data.cell.styles.textColor = [220, 38, 38]
+      if (data.column.index === 2) {
+        if (data.cell.raw === 'Si')  { data.cell.styles.textColor = [22, 163, 74]; data.cell.styles.fontStyle = 'bold' }
+        if (data.cell.raw === 'No')  { data.cell.styles.textColor = [220, 38, 38]; data.cell.styles.fontStyle = 'bold' }
       }
     },
   })

@@ -2,6 +2,7 @@
 // src/app/(app)/actividades/page.tsx — Lista de actividades con filtros
 
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { ESTADOS, TIPOS_TRABAJO_LABELS } from '@/lib/constants/estados'
 import type { EstadoActividad } from '@/lib/types/database'
@@ -28,12 +29,25 @@ const FILTROS_ESTADO: { label: string; estados: EstadoActividad[] | 'TODAS' }[] 
 ]
 
 export default function ActividadesPage() {
+  const searchParams = useSearchParams()
   const [filas, setFilas]         = useState<Fila[]>([])
   const [loading, setLoading]     = useState(true)
   const [filtro, setFiltro]       = useState<number>(0)
   const [busqueda, setBusqueda]   = useState('')
+  const [fechaDesde, setFechaDesde] = useState('')
+  const [fechaHasta, setFechaHasta] = useState('')
   const [isTecnico, setIsTecnico] = useState(false)
   const supabase = createClient()
+
+  // Aplicar filtro desde URL params (viene del dashboard)
+  useEffect(() => {
+    const param = searchParams.get('filtro')
+    const hoy = new Date().toISOString().slice(0, 10)
+    if (param === 'retraso') setFiltro(4) // no existe como grupo, lo manejamos como busqueda especial
+    if (param === 'hoy') { setFechaDesde(hoy); setFechaHasta(hoy) }
+    if (param === 'retrabajo') setFiltro(4) // Retrabajos está en índice 4
+    if (param === 'activas') setFiltro(0)
+  }, [])
 
   useEffect(() => {
     async function cargar() {
@@ -95,7 +109,12 @@ export default function ActividadesPage() {
     const pasaBusqueda = !busqueda ||
       f.id_obra.toLowerCase().includes(busqueda.toLowerCase()) ||
       f.cliente_nombre?.toLowerCase().includes(busqueda.toLowerCase())
-    return pasaEstado && pasaBusqueda
+    const pasaFechaDesde = !fechaDesde || f.fecha_fin_estimada >= fechaDesde
+    const pasaFechaHasta = !fechaHasta || f.fecha_inicio_estimada <= fechaHasta
+    // Filtro especial "retraso" desde dashboard
+    const param = searchParams.get('filtro')
+    const pasaRetraso = param === 'retraso' ? f.dias_retraso > 0 : true
+    return pasaEstado && pasaBusqueda && pasaFechaDesde && pasaFechaHasta && pasaRetraso
   })
 
   return (
@@ -117,6 +136,24 @@ export default function ActividadesPage() {
       <input type="search" placeholder="Buscar por ID o cliente..."
         value={busqueda} onChange={e => setBusqueda(e.target.value)}
         className="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+      {/* Rango de fechas */}
+      <div className="flex gap-2 items-center">
+        <div className="flex-1">
+          <p className="text-xs text-gray-400 mb-1">Desde</p>
+          <input type="date" value={fechaDesde} onChange={e => setFechaDesde(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        <div className="flex-1">
+          <p className="text-xs text-gray-400 mb-1">Hasta</p>
+          <input type="date" value={fechaHasta} onChange={e => setFechaHasta(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        {(fechaDesde || fechaHasta) && (
+          <button onClick={() => { setFechaDesde(''); setFechaHasta('') }}
+            className="mt-5 text-xs text-gray-400 hover:text-gray-600 px-2">✕</button>
+        )}
+      </div>
 
       {/* Filtros de estado */}
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">

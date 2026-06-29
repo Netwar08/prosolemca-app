@@ -143,6 +143,13 @@ export default async function DashboardPage() {
   const totalActivas = (actividades ?? []).filter((a: any) => !['FINALIZADA', 'RECHAZADA'].includes(a.estado)).length
   const conRetrasoAdmin = (actividades ?? []).filter((a: any) => a.dias_retraso > 0 && !['CERRADA', 'FINALIZADA'].includes(a.estado)).length
 
+  const hoyStr = new Date().toISOString().slice(0, 10)
+  const paraHoy = (actividades ?? []).filter((a: any) => {
+    const ini = a.fecha_inicio_estimada?.slice(0, 10)
+    const fin = a.fecha_fin_estimada?.slice(0, 10)
+    return ini <= hoyStr && fin >= hoyStr && !['FINALIZADA', 'RECHAZADA', 'CERRADA'].includes(a.estado)
+  }).length
+
   return (
     <div className="px-4 py-6 max-w-3xl mx-auto space-y-6">
 
@@ -155,19 +162,27 @@ export default async function DashboardPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="grid grid-cols-2 gap-3">
+        <a href="/actividades?filtro=activas"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer">
           <p className="text-xs text-gray-500 mb-1">Activas</p>
           <p className="text-3xl font-bold text-gray-900">{totalActivas}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        </a>
+        <a href="/actividades?filtro=retraso"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer">
           <p className="text-xs text-gray-500 mb-1">Con retraso</p>
           <p className="text-3xl font-bold text-red-600">{conRetrasoAdmin}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        </a>
+        <a href="/actividades?filtro=hoy"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer">
+          <p className="text-xs text-gray-500 mb-1">Asignaciones para hoy</p>
+          <p className="text-3xl font-bold text-blue-600">{paraHoy}</p>
+        </a>
+        <a href="/actividades?filtro=retrabajo"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer">
           <p className="text-xs text-gray-500 mb-1">Retrabajos</p>
           <p className="text-3xl font-bold text-rose-600">{conteo['RETRABAJO'] ?? 0}</p>
-        </div>
+        </a>
       </div>
 
       {/* Grupos de actividades */}

@@ -33,38 +33,9 @@ export default function LoginPage() {
 
         {/* Logo + nombre */}
         <div className="text-center mb-8 select-none">
-          {/* Isotipo simplificado — cubo con P */}
-          <div className="inline-flex mb-5">
-            <svg viewBox="0 0 80 80" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-              {/* Cara superior (gris) */}
-              <polygon points="40,4 72,22 40,40 8,22" fill="#6b7280" />
-              <polygon points="40,4 72,22 40,40 8,22" fill="url(#topGrad)" />
-              {/* Cara izquierda (navy) */}
-              <polygon points="8,22 40,40 40,76 8,58" fill="#103352" />
-              {/* Cara derecha (roja) */}
-              <polygon points="40,40 72,22 72,58 40,76" fill="#A0232A" />
-              {/* Cara derecha gradiente */}
-              <polygon points="40,40 72,22 72,58 40,76" fill="url(#rightGrad)" opacity="0.6"/>
-              {/* Letra P en cara derecha */}
-              <text x="51" y="56" fontSize="22" fontWeight="bold" fill="white" opacity="0.9"
-                fontFamily="Arial, sans-serif" textAnchor="middle">P</text>
-              {/* Bordes */}
-              <polygon points="40,4 72,22 40,40 8,22" fill="none" stroke="white" strokeWidth="0.5" opacity="0.3"/>
-              <line x1="40" y1="40" x2="40" y2="76" stroke="white" strokeWidth="0.5" opacity="0.3"/>
-              <line x1="8" y1="22" x2="8" y2="58" stroke="white" strokeWidth="0.5" opacity="0.3"/>
-              <line x1="72" y1="22" x2="72" y2="58" stroke="white" strokeWidth="0.5" opacity="0.3"/>
-              <defs>
-                <linearGradient id="topGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#9ca3af"/>
-                  <stop offset="100%" stopColor="#374151"/>
-                </linearGradient>
-                <linearGradient id="rightGrad" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#c0392b"/>
-                  <stop offset="100%" stopColor="#7B1D22"/>
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
+          {/* Isotipo — cubo con canal P */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/isotipo.svg" width={88} height={88} alt="Prosolemca" className="mb-5" />
 
           <h1
             className="text-white text-4xl tracking-widest mb-1"

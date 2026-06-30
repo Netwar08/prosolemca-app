@@ -28,26 +28,11 @@ const ROL_LABELS: Record<string, string> = {
 
 const ES_TECNICO = (rol: string) => rol === 'TECNICO_I' || rol === 'TECNICO_II'
 
-// Mini isotipo SVG
+// Mini isotipo
 function LogoMark({ size = 32 }: { size?: number }) {
   return (
-    <svg viewBox="0 0 80 80" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-      <polygon points="40,4 72,22 40,40 8,22" fill="#6b7280" />
-      <polygon points="40,4 72,22 40,40 8,22" fill="url(#sg)" />
-      <polygon points="8,22 40,40 40,76 8,58" fill="#0c2840" />
-      <polygon points="40,40 72,22 72,58 40,76" fill="#A0232A" />
-      <polygon points="40,40 72,22 72,58 40,76" fill="url(#sr)" opacity="0.5"/>
-      <text x="51" y="56" fontSize="20" fontWeight="bold" fill="white" opacity="0.95"
-        fontFamily="Arial,sans-serif" textAnchor="middle">P</text>
-      <defs>
-        <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#9ca3af"/><stop offset="100%" stopColor="#4b5563"/>
-        </linearGradient>
-        <linearGradient id="sr" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#c0392b"/><stop offset="100%" stopColor="#7B1D22"/>
-        </linearGradient>
-      </defs>
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/isotipo.svg" width={size} height={size} alt="Prosolemca" />
   )
 }
 

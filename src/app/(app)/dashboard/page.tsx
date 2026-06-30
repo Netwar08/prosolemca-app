@@ -178,10 +178,8 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
         <a href="/actividades/nueva"
-          className="text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-          style={{ background: '#A0232A' }}
-          onMouseEnter={e => ((e.target as HTMLElement).style.background = '#8B1C22')}
-          onMouseLeave={e => ((e.target as HTMLElement).style.background = '#A0232A')}>
+          className="text-white text-sm font-semibold px-4 py-2 rounded-lg"
+          style={{ background: '#A0232A' }}>
           + Nueva actividad
         </a>
       </div>

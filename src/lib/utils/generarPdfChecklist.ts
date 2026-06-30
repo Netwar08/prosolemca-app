@@ -51,7 +51,7 @@ export async function generarPdfChecklist(datos: DatosChecklist): Promise<Blob> 
   const margin = 15
 
   // ── ENCABEZADO ──────────────────────────────────────────────────────────────
-  doc.setFillColor(30, 90, 160)
+  doc.setFillColor(16, 51, 82)
   doc.rect(0, 0, pageW, 28, 'F')
 
   doc.setTextColor(255, 255, 255)
@@ -88,7 +88,7 @@ export async function generarPdfChecklist(datos: DatosChecklist): Promise<Blob> 
 
   doc.setFontSize(9)
   doc.setFont('helvetica', 'bold')
-  doc.setTextColor(30, 90, 160)
+  doc.setTextColor(16, 51, 82)
   doc.text('DATOS DE LA ACTIVIDAD', margin + 4, y + 6)
 
   doc.setTextColor(60, 60, 60)
@@ -105,7 +105,7 @@ export async function generarPdfChecklist(datos: DatosChecklist): Promise<Blob> 
   // ── TABLA DE ÍTEMS (sin fotos) ───────────────────────────────────────────────
   doc.setFontSize(10)
   doc.setFont('helvetica', 'bold')
-  doc.setTextColor(30, 90, 160)
+  doc.setTextColor(16, 51, 82)
   doc.text('VERIFICACIONES REALIZADAS', margin, y)
   y += 4
 
@@ -139,7 +139,7 @@ export async function generarPdfChecklist(datos: DatosChecklist): Promise<Blob> 
     body: filas,
     margin: { left: margin, right: margin },
     styles: { fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
-    headStyles: { fillColor: [30, 90, 160], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+    headStyles: { fillColor: [16, 51, 82], textColor: 255, fontStyle: 'bold', fontSize: 8 },
     columnStyles: {
       0: { cellWidth: 8,  halign: 'center' },
       1: { cellWidth: 119 },
@@ -160,7 +160,7 @@ export async function generarPdfChecklist(datos: DatosChecklist): Promise<Blob> 
     doc.addPage()
 
     // Mini encabezado en página de fotos
-    doc.setFillColor(30, 90, 160)
+    doc.setFillColor(16, 51, 82)
     doc.rect(0, 0, pageW, 16, 'F')
     doc.setTextColor(255, 255, 255)
     doc.setFontSize(10)
@@ -182,7 +182,7 @@ export async function generarPdfChecklist(datos: DatosChecklist): Promise<Blob> 
       // Label del ítem
       doc.setFontSize(8)
       doc.setFont('helvetica', 'bold')
-      doc.setTextColor(30, 90, 160)
+      doc.setTextColor(16, 51, 82)
       const label = `#${item.orden} ${item.nombre_item}`
       doc.text(label.length > 45 ? label.slice(0, 42) + '...' : label, fx, fy)
 
@@ -216,7 +216,7 @@ export async function generarPdfChecklist(datos: DatosChecklist): Promise<Blob> 
         // Si no queda espacio para otra fila → nueva página
         if (fy + fotoH + gapY > pageH - 20) {
           doc.addPage()
-          doc.setFillColor(30, 90, 160)
+          doc.setFillColor(16, 51, 82)
           doc.rect(0, 0, pageW, 16, 'F')
           doc.setTextColor(255, 255, 255)
           doc.setFontSize(10)

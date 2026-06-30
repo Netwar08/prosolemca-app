@@ -1,12 +1,23 @@
 // src/app/layout.tsx
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Open_Sans, Bebas_Neue } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const openSans = Open_Sans({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+})
+
+const bebasNeue = Bebas_Neue({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-bebas',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
-  title: 'Prosolemca — Gestión de Actividades',
+  title: 'Empresas Prosolemca — Gestión Técnica',
   description: 'Sistema de gestión de actividades técnicas e instalaciones',
   manifest: '/manifest.json',
   appleWebApp: {
@@ -17,21 +28,17 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#1E5AA0',
+  themeColor: '#103352',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es">
-      <body className={inter.className}>
+    <html lang="es" className={`${openSans.variable} ${bebasNeue.variable}`}>
+      <body className={openSans.className}>
         {children}
       </body>
     </html>

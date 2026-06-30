@@ -1,59 +1,102 @@
 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="gTop" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#9ca3af"/>
-      <stop offset="100%" stop-color="#374151"/>
+    <!-- Top face: silver → near black (metallic) -->
+    <linearGradient id="gTop" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%"   stop-color="#c8d0d8"/>
+      <stop offset="28%"  stop-color="#808898"/>
+      <stop offset="65%"  stop-color="#303840"/>
+      <stop offset="100%" stop-color="#080c12"/>
     </linearGradient>
+    <!-- Left face: very dark navy → medium navy -->
     <linearGradient id="gLeft" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#071826"/>
-      <stop offset="100%" stop-color="#103352"/>
+      <stop offset="0%"   stop-color="#040c18"/>
+      <stop offset="100%" stop-color="#183050"/>
     </linearGradient>
-    <linearGradient id="gRight" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#c0392b"/>
-      <stop offset="100%" stop-color="#7B1D22"/>
+    <!-- Front face: deep crimson (left/inner) → bright orange-red (right/outer) -->
+    <linearGradient id="gFront" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#8a1820"/>
+      <stop offset="45%"  stop-color="#be2025"/>
+      <stop offset="100%" stop-color="#e83020"/>
+    </linearGradient>
+    <!-- P channel interior (dark navy tunnel walls) -->
+    <linearGradient id="gCh" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#091c2e"/>
+      <stop offset="100%" stop-color="#1b3c60"/>
+    </linearGradient>
+    <!-- Counter (solid red material inside P bowl) -->
+    <linearGradient id="gCtr" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#9a1c22"/>
+      <stop offset="100%" stop-color="#781418"/>
+    </linearGradient>
+    <!-- Gray cap (top of P stem interior, top-face texture) -->
+    <linearGradient id="gCap" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#a8b0b8"/>
+      <stop offset="100%" stop-color="#252c34"/>
     </linearGradient>
   </defs>
 
-  <!-- TOP FACE (dark gray) -->
-  <polygon points="50,5 90,25 50,45 10,25" fill="url(#gTop)"/>
+  <!-- ── TOP FACE (gray metallic) ─────────────────── -->
+  <polygon points="50,8 88,28 50,48 12,28" fill="url(#gTop)"/>
 
-  <!-- LEFT FACE (navy) -->
-  <polygon points="10,25 50,45 50,90 10,70" fill="url(#gLeft)"/>
+  <!-- ── LEFT FACE (dark navy) ──────────────────────  -->
+  <polygon points="12,28 50,48 50,92 12,68" fill="url(#gLeft)"/>
 
-  <!-- RIGHT/FRONT FACE (red) -->
-  <polygon points="50,45 90,25 90,70 50,90" fill="url(#gRight)"/>
+  <!-- ── FRONT/RIGHT FACE (red) ─────────────────────  -->
+  <polygon points="50,48 88,28 88,68 50,92" fill="url(#gFront)"/>
 
-  <!-- P-SHAPED TUNNEL OPENING — dark interior visible from front -->
-  <!-- Outer P polygon (stem + bowl + counter area = all dark) -->
+  <!-- ── P-CHANNEL on front face ────────────────────
+       Dark navy region = left column (stem) + top band (bowl),
+       forming the outer ink-area of the letter P.
+       Polygon traces: TL-front → bowl-top-right → bowl-btm-right
+                     → stem-right@bowl-bottom → stem-bottom-right
+                     → BL-front → close up left edge
+  ─────────────────────────────────────────────────── -->
   <polygon
-    points="57,82 57,53 82,36 82,58 65,66 65,77 57,82"
-    fill="#1a0508"
+    points="50,48  84,31  84,52  58,62  58,88  50,92"
+    fill="url(#gCh)"
   />
 
-  <!-- Counter — red material punched back inside the P bowl -->
-  <!-- Makes it look like letter P rather than solid D shape -->
+  <!-- ── COUNTER ─────────────────────────────────────
+       Red solid material visible inside the P bowl.
+       Parallelogram aligned with the isometric front face.
+  ─────────────────────────────────────────────────── -->
   <polygon
-    points="65,51 79,44 79,57 65,64"
-    fill="#A0232A"
-  />
-  <!-- Slight shadow on counter to suggest depth -->
-  <polygon
-    points="65,51 79,44 79,57 65,64"
-    fill="#000000" opacity="0.15"
+    points="58,47  82,33  82,50  58,63"
+    fill="url(#gCtr)"
   />
 
-  <!-- Tunnel rim highlights (top edge catches light) -->
-  <line x1="57" y1="53" x2="82" y2="36"
-    stroke="rgba(255,255,255,0.22)" stroke-width="1"/>
-  <line x1="65" y1="51" x2="79" y2="44"
-    stroke="rgba(255,255,255,0.12)" stroke-width="0.6"/>
+  <!-- ── GRAY CAP ────────────────────────────────────
+       The top interior face of the P stem visible from above,
+       showing where the channel meets the top face of the cube.
+  ─────────────────────────────────────────────────── -->
+  <polygon
+    points="58,45  63,42  65,46  60,49"
+    fill="url(#gCap)"
+  />
 
-  <!-- CUBE EDGES -->
-  <polygon points="50,5 90,25 50,45 10,25"
-    fill="none" stroke="white" stroke-width="0.7" opacity="0.28"/>
-  <line x1="10" y1="25" x2="10"  y2="70"  stroke="white" stroke-width="0.7" opacity="0.22"/>
-  <line x1="50" y1="45" x2="50"  y2="90"  stroke="white" stroke-width="0.7" opacity="0.22"/>
-  <line x1="90" y1="25" x2="90"  y2="70"  stroke="white" stroke-width="0.7" opacity="0.22"/>
-  <line x1="10" y1="70" x2="50"  y2="90"  stroke="white" stroke-width="0.7" opacity="0.22"/>
-  <line x1="90" y1="70" x2="50"  y2="90"  stroke="white" stroke-width="0.7" opacity="0.22"/>
+  <!-- ── HIGHLIGHT LINES (light catching channel rims) ─ -->
+  <!-- Top rim of P channel (bright highlight) -->
+  <line x1="50" y1="48" x2="84" y2="31"
+    stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+  <!-- Top rim of counter -->
+  <line x1="58" y1="47" x2="82" y2="33"
+    stroke="rgba(255,255,255,0.28)" stroke-width="0.7"/>
+  <!-- Bottom rim of bowl -->
+  <line x1="58" y1="62" x2="84" y2="52"
+    stroke="rgba(255,255,255,0.18)" stroke-width="0.5"/>
+
+  <!-- ── OUTER CUBE EDGES (white, low opacity) ───── -->
+  <polygon points="50,8 88,28 50,48 12,28"
+    fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="0.9"/>
+  <line x1="12" y1="28" x2="12"  y2="68"  stroke="rgba(255,255,255,0.45)" stroke-width="0.9"/>
+  <line x1="50" y1="48" x2="50"  y2="92"  stroke="rgba(255,255,255,0.45)" stroke-width="0.9"/>
+  <line x1="88" y1="28" x2="88"  y2="68"  stroke="rgba(255,255,255,0.45)" stroke-width="0.9"/>
+  <line x1="12" y1="68" x2="50"  y2="92"  stroke="rgba(255,255,255,0.38)" stroke-width="0.9"/>
+  <line x1="88" y1="68" x2="50"  y2="92"  stroke="rgba(255,255,255,0.38)" stroke-width="0.9"/>
+
+  <!-- ── P CHANNEL INNER EDGES ─────────────────── -->
+  <line x1="58" y1="88" x2="58" y2="62"
+    stroke="rgba(255,255,255,0.32)" stroke-width="0.7"/>
+  <line x1="84" y1="31" x2="84" y2="52"
+    stroke="rgba(255,255,255,0.28)" stroke-width="0.7"/>
 </svg>

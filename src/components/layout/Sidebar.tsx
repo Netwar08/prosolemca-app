@@ -64,7 +64,7 @@ export default function Sidebar({ nombreUsuario, rol }: Props) {
             >
               PROSOLEMCA
             </p>
-            <p className="text-xs leading-tight" style={{ color: '#A0232A', fontWeight: 600 }}>
+            <p className="text-xs leading-tight font-semibold" style={{ color: 'rgba(255,255,255,0.65)' }}>
               {ES_TECNICO(rol) ? 'Portal Técnico' : 'Gestión Técnica'}
             </p>
           </div>

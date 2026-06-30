@@ -19,13 +19,15 @@ type Fila = {
   dias_retraso: number
 }
 
+const ESTADOS_FINALIZADAS: EstadoActividad[] = ['SUPERVISADA', 'ENTREGADA_CLIENTE', 'CERRADA', 'FINALIZADA']
+
 const FILTROS_ESTADO: { label: string; estados: EstadoActividad[] | 'TODAS' }[] = [
-  { label: 'Todas',        estados: 'TODAS' },
-  { label: 'Pendientes',   estados: ['CREADA', 'VALIDADA', 'CAMBIOS_SOLICITADOS'] },
-  { label: 'En campo',     estados: ['ASIGNADA', 'EN_EJECUCION'] },
-  { label: 'Por cerrar',   estados: ['EJECUTADA', 'SUPERVISADA', 'ENTREGADA_CLIENTE'] },
-  { label: 'Retrabajos',   estados: ['RETRABAJO'] },
-  { label: 'Cerradas',     estados: ['CERRADA', 'FINALIZADA'] },
+  { label: 'Todas',         estados: 'TODAS' },
+  { label: 'Pendientes',    estados: ['CREADA', 'VALIDADA', 'CAMBIOS_SOLICITADOS'] },
+  { label: 'En campo',      estados: ['ASIGNADA', 'EN_EJECUCION'] },
+  { label: 'Por supervisar',estados: ['EJECUTADA'] },
+  { label: 'Retrabajos',    estados: ['RETRABAJO'] },
+  { label: 'Finalizadas',   estados: ESTADOS_FINALIZADAS },
 ]
 
 export default function ActividadesPage() {
@@ -43,10 +45,10 @@ export default function ActividadesPage() {
   useEffect(() => {
     const param = searchParams.get('filtro')
     const hoy = new Date().toISOString().slice(0, 10)
-    if (param === 'retraso') setFiltro(4) // no existe como grupo, lo manejamos como busqueda especial
-    if (param === 'hoy') { setFechaDesde(hoy); setFechaHasta(hoy) }
-    if (param === 'retrabajo') setFiltro(4) // Retrabajos está en índice 4
-    if (param === 'activas') setFiltro(0)
+    if (param === 'hoy')         { setFechaDesde(hoy); setFechaHasta(hoy) }
+    if (param === 'retrabajo')   setFiltro(4) // índice 4 = Retrabajos
+    if (param === 'finalizadas') setFiltro(5) // índice 5 = Finalizadas
+    // 'activas' y 'retraso' se manejan con el filtro especial en filtradas
   }, [])
 
   useEffect(() => {
@@ -111,10 +113,11 @@ export default function ActividadesPage() {
       f.cliente_nombre?.toLowerCase().includes(busqueda.toLowerCase())
     const pasaFechaDesde = !fechaDesde || f.fecha_fin_estimada >= fechaDesde
     const pasaFechaHasta = !fechaHasta || f.fecha_inicio_estimada <= fechaHasta
-    // Filtro especial "retraso" desde dashboard
+    // Filtros especiales desde dashboard
     const param = searchParams.get('filtro')
-    const pasaRetraso = param === 'retraso' ? f.dias_retraso > 0 : true
-    return pasaEstado && pasaBusqueda && pasaFechaDesde && pasaFechaHasta && pasaRetraso
+    const pasaRetraso  = param === 'retraso'  ? f.dias_retraso > 0 : true
+    const pasaActivas  = param === 'activas'  ? !ESTADOS_FINALIZADAS.includes(f.estado) && f.estado !== 'RECHAZADA' : true
+    return pasaEstado && pasaBusqueda && pasaFechaDesde && pasaFechaHasta && pasaRetraso && pasaActivas
   })
 
   return (

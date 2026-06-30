@@ -4,20 +4,36 @@ import { redirect } from 'next/navigation'
 import { ESTADOS } from '@/lib/constants/estados'
 import type { EstadoActividad } from '@/lib/types/database'
 
+const ESTADOS_FINALIZADAS: EstadoActividad[] = ['SUPERVISADA', 'ENTREGADA_CLIENTE', 'CERRADA', 'FINALIZADA']
+
 const GRUPOS_ESTADO = [
   { label: 'Pendientes de validación', estados: ['CREADA'] as EstadoActividad[] },
   { label: 'Por asignar',              estados: ['VALIDADA'] as EstadoActividad[] },
   { label: 'En campo',                 estados: ['ASIGNADA', 'EN_EJECUCION'] as EstadoActividad[] },
   { label: 'Por supervisar',           estados: ['EJECUTADA'] as EstadoActividad[] },
-  { label: 'Por cerrar',               estados: ['SUPERVISADA', 'ENTREGADA_CLIENTE'] as EstadoActividad[] },
   { label: 'Retrabajos activos',       estados: ['RETRABAJO'] as EstadoActividad[] },
+  { label: 'Finalizadas',              estados: ESTADOS_FINALIZADAS },
 ]
 
 const GRUPOS_TECNICO = [
   { label: 'Por iniciar',   icon: '📌', estados: ['ASIGNADA'] as EstadoActividad[] },
   { label: 'En ejecución',  icon: '⚙️',  estados: ['EN_EJECUCION'] as EstadoActividad[] },
-  { label: 'Completadas',   icon: '✅',  estados: ['EJECUTADA', 'SUPERVISADA', 'ENTREGADA_CLIENTE', 'CERRADA'] as EstadoActividad[] },
+  { label: 'Completadas',   icon: '✅',  estados: ['EJECUTADA'] as EstadoActividad[] },
+  { label: 'Finalizadas',   icon: '🏁',  estados: ESTADOS_FINALIZADAS },
 ]
+
+// Componente de tarjeta KPI reutilizable
+function KpiCard({ href, label, value, color = 'text-gray-900' }: {
+  href: string; label: string; value: number; color?: string
+}) {
+  return (
+    <a href={href}
+      className="bg-white rounded-xl border border-gray-200 p-4 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer block">
+      <p className="text-xs text-gray-500 mb-1">{label}</p>
+      <p className={`text-3xl font-bold ${color}`}>{value}</p>
+    </a>
+  )
+}
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -34,28 +50,34 @@ export default async function DashboardPage() {
   const isTecnico = rol === 'TECNICO_I' || rol === 'TECNICO_II'
   const tecnicoId: string | null = (perfil as any)?.tecnico_id ?? null
 
+  const hoyStr = new Date().toISOString().slice(0, 10)
+
   // ── VISTA TÉCNICO ──────────────────────────────────────────────────────────
   if (isTecnico) {
-    let misActividades: any[] = []
+    let todasMisActividades: any[] = []
     if (tecnicoId) {
       const { data } = await (supabase as any)
         .from('actividades')
         .select(`
-          id_obra, estado, nombre_descripcion, fecha_fin_estimada,
+          id_obra, estado, nombre_descripcion,
+          fecha_inicio_estimada, fecha_fin_estimada,
           clientes(nombre)
         `)
         .or(`tecnico_id.eq.${tecnicoId},tecnico_i_id.eq.${tecnicoId}`)
-        .not('estado', 'in', '("CERRADA","FINALIZADA","RECHAZADA")')
+        .neq('estado', 'RECHAZADA')
         .order('fecha_fin_estimada', { ascending: true })
-      misActividades = data ?? []
+      todasMisActividades = data ?? []
     }
 
-    const hoy = new Date()
-    hoy.setHours(0, 0, 0, 0)
-    const conRetraso = misActividades.filter((a: any) => {
-      const fin = new Date(a.fecha_fin_estimada)
-      return fin < hoy && !['CERRADA', 'FINALIZADA'].includes(a.estado)
-    })
+    const finalizadas   = todasMisActividades.filter((a: any) => ESTADOS_FINALIZADAS.includes(a.estado))
+    const activas       = todasMisActividades.filter((a: any) => !ESTADOS_FINALIZADAS.includes(a.estado))
+    const conRetraso    = activas.filter((a: any) => (a.fecha_fin_estimada?.slice(0,10) ?? '') < hoyStr)
+    const paraHoy       = todasMisActividades.filter((a: any) =>
+      (a.fecha_inicio_estimada?.slice(0,10) ?? '') <= hoyStr &&
+      (a.fecha_fin_estimada?.slice(0,10) ?? '') >= hoyStr &&
+      !ESTADOS_FINALIZADAS.includes(a.estado)
+    )
+    const retrabajos    = todasMisActividades.filter((a: any) => a.estado === 'RETRABAJO')
 
     return (
       <div className="px-4 py-6 max-w-2xl mx-auto space-y-6">
@@ -67,16 +89,17 @@ export default async function DashboardPage() {
           <p className="text-sm text-gray-500 mt-0.5">Estas son tus actividades asignadas</p>
         </div>
 
-        {/* KPIs */}
+        {/* KPIs — 5 tarjetas clicables */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-xs text-gray-500 mb-1">Mis activas</p>
-            <p className="text-3xl font-bold text-gray-900">{misActividades.length}</p>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <p className="text-xs text-gray-500 mb-1">Con retraso</p>
-            <p className="text-3xl font-bold text-red-600">{conRetraso.length}</p>
-          </div>
+          <KpiCard href="/actividades?filtro=activas"   label="Mis activas"           value={activas.length}      color="text-gray-900" />
+          <KpiCard href="/actividades?filtro=retraso"   label="Con retraso"           value={conRetraso.length}   color="text-red-600" />
+          <KpiCard href="/actividades?filtro=hoy"       label="Asignaciones para hoy" value={paraHoy.length}      color="text-blue-600" />
+          <KpiCard href="/actividades?filtro=retrabajo" label="Retrabajos"            value={retrabajos.length}   color="text-rose-600" />
+          <a href="/actividades?filtro=finalizadas"
+            className="col-span-2 bg-white rounded-xl border border-gray-200 p-4 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer flex items-center justify-between">
+            <p className="text-xs text-gray-500">Finalizadas</p>
+            <p className="text-3xl font-bold text-green-600">{finalizadas.length}</p>
+          </a>
         </div>
 
         {/* Actividades con retraso (alerta) */}
@@ -97,7 +120,7 @@ export default async function DashboardPage() {
 
         {/* Grupos de actividades del técnico */}
         {GRUPOS_TECNICO.map(grupo => {
-          const items = misActividades.filter((a: any) =>
+          const items = todasMisActividades.filter((a: any) =>
             grupo.estados.includes(a.estado as EstadoActividad) &&
             !conRetraso.find((r: any) => r.id_obra === a.id_obra)
           )
@@ -118,7 +141,7 @@ export default async function DashboardPage() {
           )
         })}
 
-        {misActividades.length === 0 && (
+        {todasMisActividades.length === 0 && (
           <div className="text-center py-16 text-gray-400">
             <p className="text-4xl mb-3">📋</p>
             <p className="font-medium text-gray-600">Sin actividades asignadas</p>
@@ -132,7 +155,7 @@ export default async function DashboardPage() {
   // ── VISTA ADMIN / SUPERVISOR ───────────────────────────────────────────────
   const { data: actividades } = await (supabase as any)
     .from('actividades_dashboard')
-    .select('id_obra, estado, nombre_descripcion, cliente_nombre, tecnico_nombre, dias_retraso, tiene_retrabajo_activo')
+    .select('id_obra, estado, nombre_descripcion, cliente_nombre, tecnico_nombre, dias_retraso, tiene_retrabajo_activo, fecha_inicio_estimada, fecha_fin_estimada')
     .order('created_at', { ascending: false })
 
   const conteo = (actividades ?? []).reduce((acc: Record<string, number>, a: any) => {
@@ -140,15 +163,14 @@ export default async function DashboardPage() {
     return acc
   }, {} as Record<string, number>)
 
-  const totalActivas = (actividades ?? []).filter((a: any) => !['FINALIZADA', 'RECHAZADA'].includes(a.estado)).length
-  const conRetrasoAdmin = (actividades ?? []).filter((a: any) => a.dias_retraso > 0 && !['CERRADA', 'FINALIZADA'].includes(a.estado)).length
-
-  const hoyStr = new Date().toISOString().slice(0, 10)
-  const paraHoy = (actividades ?? []).filter((a: any) => {
+  const totalActivas    = (actividades ?? []).filter((a: any) => !['FINALIZADA', 'RECHAZADA', ...ESTADOS_FINALIZADAS].includes(a.estado)).length
+  const conRetrasoAdmin = (actividades ?? []).filter((a: any) => a.dias_retraso > 0 && !ESTADOS_FINALIZADAS.includes(a.estado)).length
+  const paraHoy         = (actividades ?? []).filter((a: any) => {
     const ini = a.fecha_inicio_estimada?.slice(0, 10)
     const fin = a.fecha_fin_estimada?.slice(0, 10)
-    return ini <= hoyStr && fin >= hoyStr && !['FINALIZADA', 'RECHAZADA', 'CERRADA'].includes(a.estado)
+    return ini <= hoyStr && fin >= hoyStr && !ESTADOS_FINALIZADAS.includes(a.estado) && a.estado !== 'RECHAZADA'
   }).length
+  const finalizadasAdmin = (actividades ?? []).filter((a: any) => ESTADOS_FINALIZADAS.includes(a.estado)).length
 
   return (
     <div className="px-4 py-6 max-w-3xl mx-auto space-y-6">
@@ -161,27 +183,16 @@ export default async function DashboardPage() {
         </a>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs — 5 tarjetas */}
       <div className="grid grid-cols-2 gap-3">
-        <a href="/actividades?filtro=activas"
-          className="bg-white rounded-xl border border-gray-200 p-4 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer">
-          <p className="text-xs text-gray-500 mb-1">Activas</p>
-          <p className="text-3xl font-bold text-gray-900">{totalActivas}</p>
-        </a>
-        <a href="/actividades?filtro=retraso"
-          className="bg-white rounded-xl border border-gray-200 p-4 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer">
-          <p className="text-xs text-gray-500 mb-1">Con retraso</p>
-          <p className="text-3xl font-bold text-red-600">{conRetrasoAdmin}</p>
-        </a>
-        <a href="/actividades?filtro=hoy"
-          className="bg-white rounded-xl border border-gray-200 p-4 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer">
-          <p className="text-xs text-gray-500 mb-1">Asignaciones para hoy</p>
-          <p className="text-3xl font-bold text-blue-600">{paraHoy}</p>
-        </a>
-        <a href="/actividades?filtro=retrabajo"
-          className="bg-white rounded-xl border border-gray-200 p-4 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer">
-          <p className="text-xs text-gray-500 mb-1">Retrabajos</p>
-          <p className="text-3xl font-bold text-rose-600">{conteo['RETRABAJO'] ?? 0}</p>
+        <KpiCard href="/actividades?filtro=activas"   label="Activas"               value={totalActivas}       color="text-gray-900" />
+        <KpiCard href="/actividades?filtro=retraso"   label="Con retraso"           value={conRetrasoAdmin}    color="text-red-600" />
+        <KpiCard href="/actividades?filtro=hoy"       label="Asignaciones para hoy" value={paraHoy}            color="text-blue-600" />
+        <KpiCard href="/actividades?filtro=retrabajo" label="Retrabajos"            value={conteo['RETRABAJO'] ?? 0} color="text-rose-600" />
+        <a href="/actividades?filtro=finalizadas"
+          className="col-span-2 bg-white rounded-xl border border-gray-200 p-4 hover:bg-red-50 hover:border-red-200 transition-colors cursor-pointer flex items-center justify-between">
+          <p className="text-xs text-gray-500">Finalizadas</p>
+          <p className="text-3xl font-bold text-green-600">{finalizadasAdmin}</p>
         </a>
       </div>
 
@@ -221,7 +232,7 @@ export default async function DashboardPage() {
         )
       })}
 
-      {totalActivas === 0 && (
+      {totalActivas === 0 && finalizadasAdmin === 0 && (
         <div className="text-center py-16 text-gray-400">
           <p className="text-4xl mb-3">📋</p>
           <p className="font-medium text-gray-600">No hay actividades activas</p>

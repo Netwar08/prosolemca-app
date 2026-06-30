@@ -14,6 +14,8 @@ export default function EditarTecnicoPage() {
   const [error,       setError]       = useState<string | null>(null)
   const [success,     setSuccess]     = useState<string | null>(null)
   const [tieneAcceso, setTieneAcceso] = useState(false)
+  const [confirmEliminar, setConfirmEliminar] = useState(false)
+  const [eliminando,      setEliminando]      = useState(false)
 
   const [form, setForm] = useState({
     nombre: '', apellido: '', telefono: '', email: '',
@@ -65,6 +67,14 @@ export default function EditarTecnicoPage() {
       rol:      form.rol,
     }).eq('id', id)
     if (err) { setError(err.message); setSaving(false); return }
+    router.push('/tecnicos')
+  }
+
+  async function eliminarTecnico() {
+    setEliminando(true)
+    setError(null)
+    const { error: err } = await (supabase as any).from('tecnicos').delete().eq('id', id)
+    if (err) { setError(err.message); setEliminando(false); setConfirmEliminar(false); return }
     router.push('/tecnicos')
   }
 
@@ -142,6 +152,10 @@ export default function EditarTecnicoPage() {
             <F label="Teléfono">
               <input name="telefono" value={form.telefono} onChange={handleChange} className={inp} />
             </F>
+            <F label="Correo electrónico">
+              <input name="email" type="email" value={form.email} onChange={handleChange}
+                placeholder="tecnico@ejemplo.com" className={inp} />
+            </F>
           </div>
 
           <button type="submit" disabled={saving}
@@ -149,6 +163,45 @@ export default function EditarTecnicoPage() {
             {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>
         </form>
+
+        {/* Eliminar técnico */}
+        <div className="bg-white rounded-xl border border-red-100 p-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Zona de peligro</p>
+          <button type="button"
+            onClick={() => setConfirmEliminar(true)}
+            className="w-full text-sm text-red-600 border border-red-200 px-3 py-2 rounded-lg hover:bg-red-50 transition-colors">
+            Eliminar técnico del sistema
+          </button>
+        </div>
+
+        {/* Modal confirmación */}
+        {confirmEliminar && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl space-y-4">
+              <div className="text-center">
+                <p className="text-3xl mb-2">⚠️</p>
+                <p className="text-base font-bold text-gray-900">¿Eliminar técnico?</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Esta acción eliminará permanentemente el registro de <strong>{form.nombre} {form.apellido}</strong> del sistema. No se puede deshacer.
+                </p>
+              </div>
+              {error && <p className="text-xs text-red-600 text-center">{error}</p>}
+              <div className="grid grid-cols-2 gap-3">
+                <button type="button"
+                  onClick={() => { setConfirmEliminar(false); setError(null) }}
+                  className="py-2.5 rounded-xl border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  Cancelar
+                </button>
+                <button type="button"
+                  onClick={eliminarTecnico}
+                  disabled={eliminando}
+                  className="py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white text-sm font-medium">
+                  {eliminando ? 'Eliminando...' : 'Sí, eliminar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Acceso al sistema */}
         <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
